@@ -1,0 +1,18 @@
+# dependensi & build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# data tamu & rahasia (JANGAN di-commit)
+data/
+.env
+.env.*
+!.env.example
+credentials.json
+client_secret*.json
+google-token*.json
+
+# lain-lain
+*.log
+.DS_Store
+Thumbs.db
