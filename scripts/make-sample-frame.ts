@@ -49,8 +49,8 @@ bands.forEach((c, i) => rect(0, i * bandH, W, bandH, c));
 
 // 2) matahari pixel-art di area bawah (di bawah slot 3)
 const sunCx = W / 2;
-const sunCy = 1840;
-const sunR = 100;
+const sunCy = 1860;
+const sunR = 90;
 for (let y = sunCy - sunR; y < sunCy + sunR; y += CELL) {
   for (let x = sunCx - sunR; x < sunCx + sunR; x += CELL) {
     const dx = x + CELL / 2 - sunCx;
@@ -74,7 +74,7 @@ const text = 'HIMATIFA 6';
 const px = 6;
 const textW = text.length * 6 * px - px;
 let tx = Math.round((W - textW) / 2);
-const ty = 1700;
+const ty = 1698; // di bawah bingkai slot 3 (berakhir di y=1674), di atas matahari
 for (const ch of text) {
   const g = GLYPHS[ch]!;
   g.forEach((row, ry) =>

@@ -1,0 +1,63 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-cream);
+  color: var(--ink-main);
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+
+p,
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+/* Gaya teks (Title/*, Label/*, Body/* dari Figma) */
+.t-title-s { font: 400 18px/28px var(--font-title); }
+.t-title-m { font: 400 28px/40px var(--font-title); }
+.t-title-l { font: 400 44px/60px var(--font-title); }
+.t-label-s { font: 400 18px/24px var(--font-label); }
+.t-label-m { font: 700 22px/28px var(--font-label); }
+.t-label-l { font: 700 28px/36px var(--font-label); }
+.t-body-m { font: 400 28px/32px var(--font-body); }
+.t-body-l { font: 400 34px/38px var(--font-body); }
+.is-soft { color: var(--ink-soft); }
+.nowrap { white-space: nowrap; }
+
+/* Kanvas tetap (1920x1080 untuk /booth, 1440x900 untuk /admin) yang diskalakan memenuhi layar */
+.stage-viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg-cream);
+}
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  overflow: hidden;
+  transform-origin: center center;
+}
+.scale-box {
+  position: relative;
+  overflow: hidden;
+}
+.scale-box__inner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: top left;
+}

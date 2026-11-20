@@ -64,7 +64,13 @@ app.get('/api/settings', async () => settings.get());
 app.put('/api/settings', async (req) => controller.updateSettings(req.body));
 app.get('/api/sessions', async () => store.list().slice(0, 200).map(toSummary));
 app.get('/api/queue', async () => ({ items: [], summary: controller.publicState().uploads }));
-app.get('/api/info', async () => ({ dataDir, framesDir, frames: controller.getFrames().length }));
+// path relatif terhadap folder proyek (lebih mudah dibaca operator)
+const rel = (p: string) => path.relative(root, p).split(path.sep).join('/') || '.';
+app.get('/api/info', async () => ({
+  dataDir: rel(dataDir),
+  framesDir: rel(framesDir),
+  frames: controller.getFrames().length,
+}));
 
 const intParam = (v: unknown): number => {
   const n = Number(v);

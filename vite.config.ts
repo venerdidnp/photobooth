@@ -8,6 +8,8 @@ const serverTarget = `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
 // Frontend ada di web/. Hasil build ke dist/ (disajikan oleh server).
 export default defineConfig({
   root: 'web',
+  // public/bg/background.jpg (latar tamu) ada di root repo, bukan di web/
+  publicDir: fileURLToPath(new URL('./public', import.meta.url)),
   plugins: [react()],
   build: { outDir: '../dist', emptyOutDir: true },
   server: {

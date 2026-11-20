@@ -1,0 +1,48 @@
+/*
+ * Token desain. Nilai diambil dari variabel Figma (get_variable_defs, file Hh1Y38fPNp2uUTZhEenZZr).
+ * Satu-satunya tempat hex boleh ditulis; komponen hanya memakai var(--...).
+ */
+:root {
+  /* Warna (variabel Figma: ink/*, bg/*, surface/*, brand/*, state/*, white) */
+  --ink-main: #2b1055;
+  --ink-soft: #6b4a8a;
+  --bg-cream: #fff4e0;
+  --bg-peach: #ffe3c2;
+  --surface-panel: #fffbf2;
+  --white: #ffffff;
+  --brand-yellow: #ffc93c;
+  --brand-orange: #ff7a2f;
+  --brand-pink: #ff2e93;
+  --brand-pink-strong: #d91a7c;
+  --brand-purple: #7a3eb1;
+  --brand-turquoise: #19d3c5;
+  --state-danger: #ff4d4d;
+  --state-success-text: #0b8f85;
+
+  /* Efek (Shadow/Hard-4, Hard-6, Hard-10: offset keras tanpa blur) */
+  --shadow-hard-2: 2px 2px 0 0 var(--ink-main);
+  --shadow-hard-4: 4px 4px 0 0 var(--ink-main);
+  --shadow-hard-6: 6px 6px 0 0 var(--ink-main);
+  --shadow-hard-10: 10px 10px 0 0 var(--ink-main);
+
+  /* Font (dipasang lewat @fontsource, tanpa CDN) */
+  --font-title: 'Press Start 2P', monospace;
+  --font-label: 'Silkscreen', monospace;
+  --font-body: 'VT323', monospace;
+
+  /* Gradien langit Scene/Photo (komponen Figma 14:373). Dipakai sebagai cadangan bila
+     public/bg/background.jpg belum ada. */
+  --scene-sky-0: rgb(74, 74, 160);
+  --scene-sky-1: rgb(144, 104, 168);
+  --scene-sky-2: rgb(210, 122, 166);
+  --scene-sky-3: rgb(255, 165, 138);
+  --scene-sky-4: rgb(255, 194, 122);
+  --scene-bg: linear-gradient(
+    168.17deg,
+    var(--scene-sky-0) 0%,
+    var(--scene-sky-1) 23.256%,
+    var(--scene-sky-2) 42.636%,
+    var(--scene-sky-3) 60.465%,
+    var(--scene-sky-4) 77.519%
+  );
+}
