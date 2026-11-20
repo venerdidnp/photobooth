@@ -7,7 +7,9 @@ Web app photobooth yang berjalan **lokal** di satu laptop dengan satu monitor ek
 - Satu sesi = 3 foto. Strip portrait dirakit dari 3 foto + frame PNG, disimpan di laptop.
 - Tamu mencari fotonya lewat nomor sesi, mis. `PHOTO #042.png`.
 
-> **Status: Fase 1 selesai** (seluruh alur lokal tanpa Google Drive). Upload Drive, antrean retry, dan setup kredensial adalah **Fase 2** (belum dikerjakan). Halaman Queue dan panel Google Drive sudah ada di UI tetapi masih kosong/nonaktif.
+> **Status:** alur lokal lengkap (Fase 1) dan upload otomatis ke Google Drive dengan antrean + retry (Fase 2) sudah selesai. Upload Drive **baru diuji terhadap server Google tiruan**, belum terhadap Google asli. Lakukan uji coba nyata dulu sebelum hari acara (lihat "Hari acara").
+>
+> Drive bersifat opsional: tanpa kredensial, aplikasi tetap berjalan penuh dan strip tersimpan di laptop; strip akan masuk antrean dan terupload setelah Drive disiapkan.
 
 ## Kebutuhan
 
@@ -69,6 +71,64 @@ Suara bisa dimatikan di Settings.
 | `ENTER` | Mulai retake bila ada slot terpilih, kalau tidak: selesai |
 | `ESC` dua kali | Batalkan sesi (ESC pertama hanya memperingatkan) |
 
+## Menyiapkan Google Drive
+
+Setelah **SELESAI**, strip disimpan di laptop lalu masuk antrean upload yang disimpan di disk (`data/upload-queue.json`). Worker di latar belakang mengupload satu per satu dengan retry dan exponential backoff, jadi sesi foto berikutnya tidak pernah menunggu upload. Tamu mencari fotonya dengan nama file `PHOTO #042.png` di folder Drive bersama.
+
+Dilakukan **sekali** (± 10 menit, butuh internet):
+
+### 1. Membuat kredensial di Google Cloud Console
+
+1. Buka https://console.cloud.google.com dan login dengan akun Google panitia (yang akan memiliki foto-foto ini).
+2. Buat proyek baru (menu pemilih proyek di atas, **New Project**), mis. `photobooth-himatifa`.
+3. **APIs & Services → Library**, cari **Google Drive API**, klik **Enable**.
+4. **APIs & Services → OAuth consent screen** (di tampilan baru: **Google Auth Platform**):
+   - User type: **External**. Isi nama aplikasi (mis. `Photobooth`), email dukungan, dan email kontak developer.
+   - **Scopes** (Data Access): tambahkan hanya `.../auth/drive.file`.
+   - **Publishing status: ubah ke "In production"** (tombol *Publish app*). **Ini penting.** Selama statusnya *Testing*, token login Google kedaluwarsa dalam **7 hari** sehingga upload tiba-tiba berhenti. Scope `drive.file` tidak sensitif, jadi tidak perlu verifikasi Google untuk pemakaian pribadi. Kalau muncul peringatan "app belum diverifikasi" saat login, klik *Advanced → Go to … (unsafe)*; itu aplikasi Anda sendiri.
+5. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
+   - Application type: **Desktop app**, beri nama bebas, **Create**.
+   - Salin **Client ID** dan **Client secret**.
+6. Salin `.env.example` menjadi `.env` dan isi:
+   ```
+   GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=...
+   ```
+
+### 2. Login dan buat folder tujuan
+
+```bash
+npm run drive:setup -- --create-folder "Photobooth HIMATIFA 6"
+```
+
+- Script mencetak sebuah alamat. **Buka di browser**, login dengan akun panitia, dan setujui akses. (Di WSL alamat itu dibuka dari Chrome di Windows; pengalihan ke `127.0.0.1` otomatis sampai ke script.)
+- Token login (refresh token) tersimpan di `data/google-token.json` (tidak masuk git). Scope hanya `drive.file`.
+- Script membuat folder dan menyimpan ID-nya di `data/drive-folder.json`.
+- Buka folder itu di drive.google.com → **Share** → *Anyone with the link: Viewer*, lalu bagikan link-nya ke tamu (mis. di poster/media sosial acara). Tamu cukup mencari `PHOTO #042`.
+
+**Kenapa folder dibuat oleh aplikasi?** Dengan izin `drive.file`, aplikasi hanya boleh menyentuh file dan folder yang ia buat sendiri; folder yang sudah ada biasanya ditolak Google ("File not found"). Kalau tetap ingin memakai folder yang sudah ada, isi `DRIVE_FOLDER_ID` di `.env` lalu jalankan `npm run drive:setup`; bila folder tidak bisa diakses, script akan memberi tahu dan Anda cukup memakai `--create-folder`. *Bagian ini belum teruji terhadap Google asli.*
+
+Perintah lain: `npm run drive:setup -- --reauth` (login ulang bila token dicabut).
+
+### 3. Pastikan jalan
+
+Jalankan `npm start`. Di log server harus muncul `Google Drive: terkonfigurasi`. Di `/admin` → **SETTINGS**, panel *Google Drive* harus menampilkan `CONNECTED`, akun, dan nama folder, dan chip di kanan atas menjadi **DRIVE OK**. Lakukan satu sesi percobaan dan pastikan `PHOTO #001.png` muncul di folder Drive.
+
+### Cara kerja antrean
+
+| Kejadian | Perlakuan |
+|---|---|
+| Internet mati / timeout | Tetap **QUEUED**, dicoba lagi dengan jeda 2, 4, 8, 16, 30 detik (maks. 30 dtk). **Tidak pernah dianggap gagal**; saat internet kembali, langsung dicoba sekarang. Layar tamu memakai tampilan "PHOTO SAVED LOCALLY". |
+| Google error sementara (429/5xx) | Backoff 5 dtk hingga 5 menit; **FAILED** setelah 8 percobaan. |
+| Token dicabut/kedaluwarsa, folder tidak bisa diakses, dll. | Langsung **FAILED** dengan pesan di halaman Queue dan chip **DRIVE ERROR**. Perbaiki (mis. `npm run drive:setup -- --reauth`), lalu tekan **RETRY**. |
+| Server mati/restart | Antrean tersimpan di disk; item yang sedang diupload kembali ke QUEUED dan lanjut otomatis. Sesi selesai yang belum pernah masuk antrean ikut dimasukkan saat server menyala. |
+| Upload diulang setelah balasan hilang | Tidak ada file ganda: setiap upload membawa kunci unik sesi dan Drive dicek dulu. |
+
+Catatan:
+- Nama file di Drive adalah `PHOTO #<nomor>.png`. Pakai **folder baru untuk tiap acara**; kalau nomor sesi dimulai dari 001 lagi di folder yang sama, Drive akan berisi dua file bernama sama.
+- Panel Settings: **CHANGE FOLDER** (tempel link/ID folder yang dibuat aplikasi) dan **DISCONNECT** (hapus token; sambungkan lagi dengan `drive:setup`).
+- Progress upload per-byte tidak ditampilkan (file dikirim sekaligus); item yang sedang diupload tampil setengah penuh.
+
 ## Latar layar tamu
 
 Taruh gambar di **`public/bg/background.jpg`** (disarankan 1920x1080). Kalau file belum ada, layar tamu memakai gradien sunset sebagai cadangan. Setelah menaruh file, jalankan ulang `npm start` (atau `npm run build`) supaya ikut tersalin.
@@ -105,6 +165,9 @@ Foto diletakkan di slot dengan pemotongan tengah (cover), lalu PNG frame digamba
 data/
 ├─ counter.json           nomor sesi terakhir
 ├─ settings.json          pengaturan operator
+├─ upload-queue.json      antrean upload Drive
+├─ google-token.json      token login Google (RAHASIA)
+├─ drive-folder.json      ID folder Drive tujuan
 └─ sessions/042/
    ├─ slot-1.jpg … slot-3.jpg   foto mentah per slot
    ├─ strip.png                 strip akhir
@@ -156,6 +219,27 @@ Keputusan yang diambil (bisa diubah):
 - **Gallery** memakai foto asli sebagai thumbnail (belum ada thumbnail kecil di server); cukup untuk ratusan sesi di laptop, tetapi bisa diperbaiki bila terasa berat.
 - Server hanya mendengarkan `127.0.0.1` (tidak terbuka ke jaringan). Ubah lewat `HOST` di `.env` bila perlu.
 
-## Fase 2 (belum dikerjakan)
+## Hari acara
 
-Upload otomatis ke Google Drive: antrean tersimpan di disk, worker latar belakang dengan retry dan exponential backoff, OAuth 2.0 (scope `drive.file`), script setup refresh token, dan panduan membuat kredensial di Google Cloud Console. Sesi yang selesai sebelum Fase 2 aktif akan dimasukkan ke antrean saat server menyala.
+**Sehari sebelumnya (butuh internet):**
+1. `npm install` dan `npm start` sekali; pastikan tidak ada error.
+2. Siapkan Drive (bagian di atas) dan lakukan **satu sesi percobaan penuh**: `PHOTO #001.png` harus muncul di folder Drive dan `/admin` menunjukkan **DRIVE OK**.
+3. Letakkan `public/bg/background.jpg` dan frame asli di `frames/` (PNG + JSON).
+4. Hapus data percobaan supaya nomor mulai dari 001: hentikan server, hapus isi folder `data/` **kecuali** `google-token.json` dan `drive-folder.json`. Dan pakai folder Drive baru bila folder percobaan sudah berisi foto.
+5. Uji dengan Wi-Fi dimatikan: selesaikan satu sesi, layar tamu harus menampilkan "PHOTO SAVED LOCALLY", lalu nyalakan Wi-Fi dan lihat strip terupload sendiri.
+
+**Saat acara:**
+1. Colok webcam dan monitor eksternal, lalu `npm start` di folder proyek.
+2. Chrome: `/admin` di laptop; **jendela baru** `/booth` diseret ke monitor eksternal, F11 (klik sekali di dalamnya bila ingin suara).
+3. Di `/admin` periksa chip kanan atas: **BOOTH OK**, **ONLINE**, **DRIVE OK**; pilih webcam dan frame.
+4. Tekan `SPACE` untuk tiap tamu. Selesaikan dengan `ENTER`. Tamu mencari `PHOTO #nomor` di folder Drive.
+5. Pantau halaman **QUEUE**: bila ada **FAILED**, baca pesannya, perbaiki, lalu **RETRY**.
+
+**Bila ada masalah:**
+- *BOOTH belum OK*: pastikan jendela `/booth` terbuka (bukan tab latar belakang) dan tidak diminimalkan.
+- *Layar hitam di viewfinder*: webcam terlepas; cabut-colok. Aplikasi mencoba membukanya lagi tiap 2 detik.
+- *DRIVE ERROR*: baca pesan di SETTINGS atau QUEUE. Token dicabut → `npm run drive:setup -- --reauth` lalu RETRY.
+- *Server mati*: jalankan `npm start` lagi. Foto, nomor sesi, dan antrean upload semuanya selamat.
+- *Cadangan terakhir*: semua foto ada di `data/sessions/<nomor>/strip.png` dan bisa disalin manual.
+
+Variabel `GOOGLE_API_BASE`, `GOOGLE_UPLOAD_BASE`, `GOOGLE_TOKEN_URL`, dan `CONNECTIVITY_URL` hanya untuk pengujian (server Google tiruan); jangan diisi di acara sebenarnya.

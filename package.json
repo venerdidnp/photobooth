@@ -11,7 +11,8 @@
     "dev": "concurrently -k -n server,web -c blue,magenta \"tsx watch server/src/index.ts\" \"vite\"",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "make-frame": "tsx scripts/make-sample-frame.ts"
+    "make-frame": "tsx scripts/make-sample-frame.ts",
+    "drive:setup": "tsx scripts/drive-setup.ts"
   },
   "dependencies": {
     "@fastify/static": "^10.1.12",

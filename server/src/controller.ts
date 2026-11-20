@@ -42,6 +42,8 @@ export interface ControllerDeps {
   onFinalized?: (no: number) => void;
   drive?: () => DriveInfo;
   queueSummary?: () => QueueSummary;
+  /** Operator menekan RETRY di antrean upload (id kosong = semua yang gagal). */
+  onQueueRetry?: (id?: string) => void;
 }
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -352,6 +354,9 @@ export class Controller {
         break;
       case 'cancel':
         this.dispatch({ type: 'cancel' });
+        break;
+      case 'queue.retry':
+        this.deps.onQueueRetry?.(msg.id);
         break;
       default:
         break;

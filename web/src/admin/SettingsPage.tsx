@@ -42,6 +42,36 @@ export function SettingsPage({ ctx }: { ctx: AdminCtx }) {
 
   const drive = state.drive;
   const shots = state.frame?.slots.length ?? frames[0]?.slots.length ?? 3;
+  const [driveMsg, setDriveMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const changeFolder = async () => {
+    const input = window.prompt('Paste the Google Drive folder link or ID:');
+    if (!input) return;
+    setBusy(true);
+    setDriveMsg(null);
+    try {
+      const res = await fetch('/api/drive/folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder: input }),
+      });
+      const json = (await res.json()) as { ok: boolean; name?: string; error?: string };
+      setDriveMsg(json.ok ? `Folder changed to "${json.name}".` : (json.error ?? 'Could not change the folder.'));
+    } catch {
+      setDriveMsg('Could not reach the server.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const disconnect = async () => {
+    if (!window.confirm('Disconnect Google Drive? Uploads pause until you run "npm run drive:setup" again.')) return;
+    setBusy(true);
+    await fetch('/api/drive/disconnect', { method: 'POST' }).catch(() => undefined);
+    setDriveMsg('Disconnected.');
+    setBusy(false);
+  };
 
   return (
     <>
@@ -83,12 +113,13 @@ export function SettingsPage({ ctx }: { ctx: AdminCtx }) {
             <p className="t-label-s is-soft nowrap">UPLOAD FOLDER</p>
             <div className="folder-input">{drive.folderName ?? '-'}</div>
             {drive.error && <p className="empty-note">{drive.error}</p>}
-            {!drive.configured && <p className="empty-note">See the README to connect Google Drive.</p>}
+            {!drive.configured && !drive.error && <p className="empty-note">See the README to connect Google Drive.</p>}
+            {driveMsg && <p className="empty-note">{driveMsg}</p>}
             <div className="btn-row">
-              <Button variant="secondary" size="compact" disabled>
+              <Button variant="secondary" size="compact" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => void changeFolder()}>
                 CHANGE FOLDER
               </Button>
-              <Button variant="danger" size="compact" disabled>
+              <Button variant="danger" size="compact" disabled={busy || !drive.configured} onMouseDown={(e) => e.preventDefault()} onClick={() => void disconnect()}>
                 DISCONNECT
               </Button>
             </div>

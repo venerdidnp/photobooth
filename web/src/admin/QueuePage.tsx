@@ -14,6 +14,11 @@ export function QueuePage({ ctx }: { ctx: AdminCtx }) {
   const { state, send } = ctx;
   const [items, setItems] = useState<QueueItem[]>([]);
 
+  const s: QueueSummary = state.uploads;
+  const pending = s.queued + s.uploading;
+  const summaryKey = `${s.queued}/${s.uploading}/${s.done}/${s.failed}`;
+
+  // muat ulang daftar setiap ringkasan antrean berubah (dikirim server lewat WebSocket) + cadangan berkala
   useEffect(() => {
     let alive = true;
     const load = () =>
@@ -21,15 +26,14 @@ export function QueuePage({ ctx }: { ctx: AdminCtx }) {
         .then((r) => alive && setItems(r.items))
         .catch(() => undefined);
     load();
-    const t = window.setInterval(load, 2000);
+    const t = window.setInterval(load, 4000);
     return () => {
       alive = false;
       window.clearInterval(t);
     };
-  }, []);
+  }, [summaryKey]);
 
-  const s: QueueSummary = state.uploads;
-  const pending = s.queued + s.uploading;
+  const lastProblem = items.find((i) => i.status === 'failed')?.error ?? items.find((i) => i.error)?.error;
 
   return (
     <>
@@ -65,7 +69,7 @@ export function QueuePage({ ctx }: { ctx: AdminCtx }) {
             ) : (
               <div className="q-list">
                 {items.map((it, i) => (
-                  <div key={it.id} className={i % 2 === 0 ? 'q-row q-row--alt' : 'q-row'}>
+                  <div key={it.id} className={i % 2 === 0 ? 'q-row q-row--alt' : 'q-row'} title={it.error}>
                     <span className="cell c-file t-body-l nowrap">{stripFileName(it.sessionNo)}</span>
                     <span className="cell c-session t-label-s">#{formatSessionNo(it.sessionNo)}</span>
                     <span className="cell c-size t-body-l nowrap">{mb(it.sizeBytes)}</span>
@@ -93,6 +97,10 @@ export function QueuePage({ ctx }: { ctx: AdminCtx }) {
                 ))}
               </div>
             )}
+            {!state.drive.configured && items.length > 0 && (
+              <p className="empty-note">Google Drive is not set up, so strips wait here (and stay on this laptop) until it is.</p>
+            )}
+            {lastProblem && <p className="empty-note">Last problem: {lastProblem}</p>}
           </Panel>
         </div>
       </div>
