@@ -16,3 +16,4 @@ google-token*.json
 *.log
 .DS_Store
 Thumbs.db
+node_modules
