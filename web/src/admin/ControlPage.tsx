@@ -81,7 +81,7 @@ function MonitorCard({ ctx }: { ctx: AdminCtx }) {
           </>
         ) : (
           <FitBox width={1920} height={1080}>
-            <BoothScreen state={state} mirror liveView={<p className="booth-stage__empty">LIVE</p>} />
+            <BoothScreen state={state} mirror frames={ctx.frames} liveView={<p className="booth-stage__empty">LIVE</p>} />
           </FitBox>
         )}
       </div>
@@ -315,7 +315,7 @@ function FrameCard({ ctx }: { ctx: AdminCtx }) {
   const idle = state.phase === 'idle';
   const selectedId = state.frame?.id ?? null;
   return (
-    <Card title="Frame" sub="Frame baru: taruh PNG + JSON di folder frames/.">
+    <Card title="Frame" sub="Tamu melihat daftar ini di layar awal. Klik untuk memilih, atau tekan F untuk berganti.">
       {frames.length === 0 ? (
         <p className="empty-note">Belum ada frame.</p>
       ) : (

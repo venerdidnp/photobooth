@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { PublicState, ServerMsg } from '../../../shared/protocol';
+import type { FrameInfo, PublicState, ServerMsg } from '../../../shared/protocol';
 import { LiveVideo } from '../components/LiveVideo';
 import { Stage } from '../components/Stage';
 import { captureFrame, useCamera } from '../lib/camera';
 import { composeStrip } from '../lib/compose';
-import { sessionFileUrl, useServer } from '../lib/server';
+import { api, sessionFileUrl, useServer } from '../lib/server';
 import { sfx, unlockAudioOnInteraction } from '../lib/sfx';
 import { BoothScreen } from './BoothScreen';
 
@@ -26,6 +26,7 @@ export function BoothApp() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sendRef = useRef<ReturnType<typeof useServer>['send'] | null>(null);
   const [localShot, setLocalShot] = useState<{ slot: number; url: string } | null>(null);
+  const [frames, setFrames] = useState<FrameInfo[]>([]);
 
   const handleMessage = useCallback((msg: ServerMsg) => {
     const send = sendRef.current;
@@ -78,6 +79,21 @@ export function BoothApp() {
     if (connected) send({ type: 'camera.status', ok: stream !== null && !error, error: error ?? undefined });
   }, [connected, stream, error, send]);
 
+  // daftar frame untuk layar awal; diperbarui berkala (frame baru muncul sendiri)
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      api<FrameInfo[]>('/api/frames')
+        .then((f) => alive && setFrames(f))
+        .catch(() => undefined);
+    void load();
+    const t = window.setInterval(load, 5000);
+    return () => {
+      alive = false;
+      window.clearInterval(t);
+    };
+  }, []);
+
   useEffect(() => unlockAudioOnInteraction(), []);
 
   // suara hitung mundur & selesai
@@ -114,7 +130,7 @@ export function BoothApp() {
   ) : (
     <>
       <LiveVideo stream={null} mirror={false} videoRef={videoRef} />
-      <p className="booth-stage__empty">{error ? 'Kamera tidak tersedia' : 'Memulai kamera...'}</p>
+      {state.phase !== 'idle' && <p className="booth-stage__empty">{error ? 'Kamera tidak tersedia' : 'Memulai kamera...'}</p>}
     </>
   );
 
@@ -123,6 +139,7 @@ export function BoothApp() {
       <BoothScreen
         state={state}
         liveView={liveView}
+        frames={frames}
         localShotUrl={localShot && localShot.slot === state.current ? localShot.url : null}
       />
     </Stage>

@@ -104,6 +104,10 @@ export function AdminApp() {
   // --- pintasan keyboard
   const stateRef = useRef(state);
   stateRef.current = state;
+  const framesRef = useRef(frames);
+  framesRef.current = frames;
+  const saveSettingsRef = useRef(saveSettings);
+  saveSettingsRef.current = saveSettings;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const s = stateRef.current;
@@ -114,6 +118,11 @@ export function AdminApp() {
       if (e.key === ' ' && s.phase === 'idle') {
         e.preventDefault();
         send({ type: 'start' });
+      } else if (e.key.toLowerCase() === 'f' && s.phase === 'idle' && framesRef.current.length > 1) {
+        // ganti ke frame berikutnya (berputar)
+        const list = framesRef.current;
+        const i = list.findIndex((f) => f.id === s.frame?.id);
+        saveSettingsRef.current({ frameId: list[(i + 1) % list.length]!.id });
       } else if (/^[1-9]$/.test(e.key) && s.phase === 'review') {
         send({ type: 'retake.toggle', slot: Number(e.key) });
       } else if (e.key === 'Enter' && s.phase === 'review') {

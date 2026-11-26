@@ -12,13 +12,15 @@ interface Props {
   localShotUrl?: string | null;
   /** Mode cermin di panel operator: kursor normal. */
   mirror?: boolean;
+  /** Semua frame yang tersedia (untuk daftar pilihan di layar awal). */
+  frames?: FrameInfo[];
 }
 
 /**
  * Seluruh tampilan tamu 1920x1080 sebagai fungsi dari state server.
  * Murni tampilan: tidak ada tombol/tautan.
  */
-export function BoothScreen({ state, liveView, localShotUrl, mirror }: Props) {
+export function BoothScreen({ state, liveView, localShotUrl, mirror, frames = [] }: Props) {
   const phase = state.phase;
   const onStage = phase === 'idle' || phase === 'ready' || phase === 'countdown' || phase === 'flash' || phase === 'between' || phase === 'assembling';
 
@@ -26,7 +28,7 @@ export function BoothScreen({ state, liveView, localShotUrl, mirror }: Props) {
     <div className={mirror ? 'booth booth--mirror' : 'booth'} onContextMenu={(e) => e.preventDefault()}>
       <Header state={state} />
       <div className="booth-main">
-        {onStage ? <CameraStage state={state} liveView={liveView} localShotUrl={localShotUrl} /> : <ResultScreen state={state} />}
+        {onStage ? <CameraStage state={state} liveView={liveView} localShotUrl={localShotUrl} frames={frames} /> : <ResultScreen state={state} />}
       </div>
       <Footer state={state} />
     </div>
@@ -90,7 +92,17 @@ function footerStatus(state: PublicState): string {
 
 // ---------------------------------------------------------------- idle + pengambilan foto
 
-function CameraStage({ state, liveView, localShotUrl }: { state: PublicState; liveView?: ReactNode; localShotUrl?: string | null }) {
+function CameraStage({
+  state,
+  liveView,
+  localShotUrl,
+  frames,
+}: {
+  state: PublicState;
+  liveView?: ReactNode;
+  localShotUrl?: string | null;
+  frames: FrameInfo[];
+}) {
   const phase = state.phase;
   const cur = state.current ?? state.queue[0] ?? 1;
   const total = state.slotCount;
@@ -106,14 +118,34 @@ function CameraStage({ state, liveView, localShotUrl }: { state: PublicState; li
       {showShot ? <img className="booth-shot" src={shotUrl} alt="" draggable={false} /> : liveView}
 
       {phase === 'idle' && (
-        <div className="booth-overlay booth-overlay--dim">
+        <div className="booth-overlay booth-overlay--idle">
           <div className="attract">
             <p className="attract__tag">Photobooth · {state.frame ? `${state.frame.slots.length} Pose` : 'Strip Foto'}</p>
             <p className="attract__line">DIES NATALIS</p>
             <p className="attract__line attract__line--soft">INFORMATIKA KE-6</p>
-            <p className="attract__press">Tunggu giliranmu</p>
-            <p className="attract__wait">Menunggu pemain berikutnya...</p>
           </div>
+
+          {frames.length > 0 && (
+            <div className="frame-picker">
+              <p className="frame-picker__title">Pilih frame favoritmu · sebutkan ke operator</p>
+              <div className="frame-picker__list">
+                {frames.map((f) => {
+                  const on = f.id === state.frame?.id;
+                  return (
+                    <div key={f.id} className={on ? 'frame-card frame-card--on' : 'frame-card'}>
+                      <div className="frame-card__thumb">
+                        <img src={f.imageUrl} alt="" draggable={false} />
+                      </div>
+                      <p className="frame-card__name">{f.name}</p>
+                      <p className="frame-card__tag">{on ? 'Dipakai sekarang' : '\u00a0'}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <p className="attract__wait">Menunggu pemain berikutnya...</p>
         </div>
       )}
 

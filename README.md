@@ -78,6 +78,7 @@ Suara bisa dimatikan di Settings.
 | Tombol | Fungsi |
 |---|---|
 | `SPASI` | Mulai sesi (saat idle) |
+| `F` | Ganti ke frame berikutnya (saat idle, bila ada lebih dari satu frame) |
 | `1` - `4` | Pilih/batalkan pose untuk diulang (saat review) |
 | `ENTER` | Mulai retake bila ada pose terpilih, kalau tidak: selesai |
 | `ESC` dua kali | Batalkan sesi (ESC pertama hanya memperingatkan) |
