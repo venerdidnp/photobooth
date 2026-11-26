@@ -34,7 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   frameId: 'dies-natalis',
   countdownSec: 5,
   pauseSec: 5,
-  mirrorPreview: true,
+  mirrorPreview: false,
   sound: true,
   flash: true,
 };
