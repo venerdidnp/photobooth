@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { stripFileName } from '../../shared/protocol';
+import { BASIC_REALM, checkBasicAuth } from './auth';
 import { Controller } from './controller';
 import { startConnectivityMonitor } from './connectivity';
 import { UploadQueue, type QueueRecord } from './drive/queue';
@@ -25,6 +26,21 @@ const distDir = path.join(root, 'dist');
 
 const app = Fastify({ logger: { level: 'info' }, bodyLimit: 40 * 1024 * 1024 });
 const log = (msg: string) => app.log.info(msg);
+
+// ---------- login (wajib kalau server dibuka ke internet) ----------
+
+const authUser = process.env.BASIC_AUTH_USER ?? '';
+const authPass = process.env.BASIC_AUTH_PASS ?? '';
+const authOn = authUser !== '' && authPass !== '';
+if (authOn) {
+  // /api/health dikecualikan supaya pemeriksa kesehatan hosting bisa jalan tanpa login
+  app.addHook('onRequest', async (req, reply) => {
+    if (req.url === '/api/health') return;
+    if (!checkBasicAuth(req.headers.authorization, authUser, authPass)) {
+      return reply.code(401).header('WWW-Authenticate', BASIC_REALM).type('text/plain').send('Login diperlukan');
+    }
+  });
+}
 
 const store = new SessionStore(dataDir);
 const settings = new SettingsStore(path.join(dataDir, 'settings.json'));
@@ -224,6 +240,15 @@ app.server.on('upgrade', (req, socket, head) => {
     socket.destroy();
     return;
   }
+  if (authOn && !checkBasicAuth(req.headers.authorization, authUser, authPass)) {
+    socket.write(`HTTP/1.1 401 Unauthorized
+WWW-Authenticate: ${BASIC_REALM}
+Connection: close
+
+`);
+    socket.destroy();
+    return;
+  }
   wss.handleUpgrade(req, socket, head, (ws) => controller.attach(ws));
 });
 
@@ -262,6 +287,9 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 await app.listen({ port: PORT, host: HOST });
+if (!authOn && HOST !== '127.0.0.1' && HOST !== 'localhost') {
+  app.log.warn(`HOST=${HOST} tetapi BASIC_AUTH_USER/BASIC_AUTH_PASS belum diisi: siapa pun yang bisa menjangkau server ini bisa mengendalikan booth!`);
+}
 worker.start();
 void drive.verify();
 log(

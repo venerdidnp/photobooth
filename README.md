@@ -129,6 +129,46 @@ Catatan:
 - Panel Settings: **CHANGE FOLDER** (tempel link/ID folder yang dibuat aplikasi) dan **DISCONNECT** (hapus token; sambungkan lagi dengan `drive:setup`).
 - Progress upload per-byte tidak ditampilkan (file dikirim sekaligus); item yang sedang diupload tampil setengah penuh.
 
+## Deploy ke Fly.io (opsional, dengan cadangan lokal)
+
+Aplikasi yang sama bisa jalan di internet, jadi `/admin` dan `/booth` cukup dibuka dari browser laptop mana pun. Server menyimpan state sesi di memori, jadi harus **satu mesin yang selalu menyala** (sudah diatur di `fly.toml`). File yang dipakai: `Dockerfile`, `fly.toml`, `.dockerignore`.
+
+**Penting dipahami dulu**
+- Kalau server di cloud, **setiap jepretan dikirim lewat internet**. Wifi buruk membuat sesi foto tersendat. Karena itu siapkan cadangan lokal (di bawah).
+- Indikator Online/Offline mengukur internet milik **server**, bukan wifi laptopmu. Saat wifi laptop mati, yang terjadi adalah halaman menyambung ulang terus-menerus. Layar "Foto Tersimpan di Laptop" tidak akan muncul di mode cloud. Pindah ke cadangan lokal dilakukan **manual** oleh operator.
+- Server publik **wajib** pakai login. Isi `BASIC_AUTH_USER` dan `BASIC_AUTH_PASS`; browser akan meminta login untuk `/admin` dan `/booth`. Kalau kosong sementara `HOST` bukan `127.0.0.1`, server menulis peringatan di log.
+- Kamera di browser hanya boleh dipakai di HTTPS (atau localhost). Fly menyediakan HTTPS otomatis.
+
+**Langkah (butuh akun Fly.io dan kartu pembayaran)**
+
+1. Pasang `flyctl` (Mac: `brew install flyctl`), lalu `fly auth login`.
+2. Ganti `app = "..."` di `fly.toml` dengan nama unik.
+3. Buat aplikasi dan volume data:
+   ```
+   fly apps create <nama-app>
+   fly volumes create photobooth_data --region sin --size 1
+   ```
+4. Isi rahasia (jangan ditaruh di git):
+   ```
+   fly secrets set BASIC_AUTH_USER=operator BASIC_AUTH_PASS=<password-kuat>      GOOGLE_CLIENT_ID=<...> GOOGLE_CLIENT_SECRET=<...>
+   ```
+5. Setup Drive **di laptop** (login Google membuka browser lokal): `npm run drive:setup -- --create-folder "Photobooth Informatika 6"`. Ini menghasilkan `data/google-token.json` dan `data/drive-folder.json`.
+6. `fly deploy`, lalu salin dua file itu ke volume dan restart:
+   ```
+   fly ssh sftp shell
+   > put data/google-token.json /data/google-token.json
+   > put data/drive-folder.json /data/drive-folder.json
+   fly machine restart
+   ```
+7. Buka `https://<nama-app>.fly.dev/admin`, dan `/booth` di jendela baru untuk monitor tamu. Cek chip **Drive OK**.
+8. Lakukan **satu sesi percobaan penuh** dari tempat acara, dengan wifi yang akan dipakai.
+
+**Cadangan lokal (kalau wifi buruk)**
+- Siapkan versi lokal di laptop yang sama (bagian "Menyiapkan layar" di atas) dan buka `http://localhost:3000/admin` serta `/booth`. Cukup tutup tab cloud dan pakai tab lokal.
+- Pakai **folder Drive berbeda** untuk lokal (`npm run drive:setup -- --create-folder "Photobooth Informatika 6 (lokal)"`). Nomor sesi cloud dan lokal berjalan sendiri-sendiri, jadi di folder yang sama bisa ada dua file `PHOTO #001.png`.
+- Sesi yang sedang berjalan di cloud tidak ikut pindah. Batalkan atau selesaikan dulu sebelum berpindah.
+- Foto di cloud tersimpan di volume `/data` dan di Drive (antrean upload tetap berjalan di server, tidak bergantung wifi laptop).
+
 ## Tampilan
 
 - **/admin** (laptop operator): tema terang minimalis (font Inter), responsif. Halaman **Kontrol** (preview monitor, slot pose + retake, riwayat sesi, kamera & pengaturan sesi, frame), **Antrean Upload**, dan **Pengaturan** (Google Drive + lokasi penyimpanan). Tombol **Buka Layar Tamu** di header membuka `/booth` di jendela baru.
