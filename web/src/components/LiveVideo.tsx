@@ -5,7 +5,7 @@ export function LiveVideo({
   stream,
   mirror,
   videoRef,
-  className = 'viewfinder__media',
+  className = 'live-video',
 }: {
   stream: MediaStream | null;
   mirror: boolean;

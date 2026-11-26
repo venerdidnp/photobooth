@@ -1,39 +1,54 @@
-interface StepperProps {
-  value: number;
-  min: number;
-  max: number;
-  onChange?: (value: number) => void;
-  /** Tampilkan saja (tidak bisa diubah). */
-  readOnly?: boolean;
-}
+import type { ReactNode } from 'react';
 
-/** Stepper - / nilai / + (O5 Settings). */
-export function Stepper({ value, min, max, onChange, readOnly }: StepperProps) {
-  const set = (v: number) => onChange?.(Math.min(max, Math.max(min, v)));
-  return (
-    <div className="stepper">
-      <button type="button" className="stepper__btn" disabled={readOnly || value <= min} onClick={() => set(value - 1)} aria-label="decrease">
-        -
-      </button>
-      <div className="stepper__value">{value}</div>
-      <button type="button" className="stepper__btn" disabled={readOnly || value >= max} onClick={() => set(value + 1)} aria-label="increase">
-        +
-      </button>
-    </div>
-  );
-}
-
-export function Toggle({ on, onChange, label }: { on: boolean; onChange: (on: boolean) => void; label: string }) {
+export function Toggle({ on, onChange, label, disabled }: { on: boolean; onChange: (on: boolean) => void; label: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
       aria-label={label}
+      disabled={disabled}
       className={on ? 'toggle toggle--on' : 'toggle'}
       onClick={() => onChange(!on)}
     >
       <span className="toggle__knob" />
     </button>
+  );
+}
+
+export function SwitchRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="switch-row">
+      <span>{label}</span>
+      {children}
+    </div>
+  );
+}
+
+/** <select> berlabel. `options` = [nilai, teks]. */
+export function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  options: [string, string][];
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div>
+      <label className="field__label">{label}</label>
+      <select className="select" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} aria-label={label}>
+        {options.map(([v, text]) => (
+          <option key={v} value={v}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

@@ -1,8 +1,8 @@
-import { useLayoutEffect, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 /**
  * Kanvas berukuran tetap (mis. 1920x1080) yang diskalakan memenuhi jendela dengan rasio tetap,
- * ditaruh di tengah. Sisa ruang diisi warna krem.
+ * ditaruh di tengah. Sisa ruang diisi warna latar gelap.
  */
 export function Stage({ width, height, children }: { width: number; height: number; children: ReactNode }) {
   const [scale, setScale] = useState(1);
@@ -26,21 +26,27 @@ export function Stage({ width, height, children }: { width: number; height: numb
   );
 }
 
-/** Menampilkan konten berukuran tetap dalam kotak yang lebih kecil (mis. cermin layar tamu di panel operator). */
-export function ScaleBox({
-  width,
-  height,
-  scale,
-  children,
-}: {
-  width: number;
-  height: number;
-  scale: number;
-  children: ReactNode;
-}) {
+/**
+ * Menampilkan konten berukuran tetap (mis. cermin layar tamu 1920x1080) selebar kotak induknya,
+ * dengan rasio tetap. Skala mengikuti lebar kotak.
+ */
+export function FitBox({ width, height, children }: { width: number; height: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setScale(el.clientWidth / width);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [width]);
+
   return (
-    <div className="scale-box" style={{ width: width * scale, height: height * scale }}>
-      <div className="scale-box__inner" style={{ width, height, transform: `scale(${scale})` }}>
+    <div ref={ref} className="fit-box" style={{ aspectRatio: `${width} / ${height}` }}>
+      <div className="fit-box__inner" style={{ width, height, transform: `scale(${scale})` }}>
         {children}
       </div>
     </div>

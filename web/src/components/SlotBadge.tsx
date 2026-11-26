@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react';
 
-/** Slot Badge (Figma 3:55): nomor slot di pojok foto. */
-export function SlotBadge({ number, style }: { number: number | string; style?: CSSProperties }) {
+/** Nomor slot di pojok foto. */
+export function SlotBadge({ number, style, className }: { number: number | string; style?: CSSProperties; className?: string }) {
   return (
-    <span className="slot-badge" style={style}>
+    <span className={['slot-badge', className].filter(Boolean).join(' ')} style={style}>
       {number}
     </span>
   );

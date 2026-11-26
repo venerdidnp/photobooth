@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'photobooth.cameraId';
 
+/** id khusus untuk kamera simulasi (tanpa webcam), berguna untuk uji coba. */
+export const DEMO_CAMERA_ID = 'demo';
+
 /** Pilihan kamera terakhir (diingat di browser operator). */
 export function loadCameraId(): string | null {
   try {
@@ -32,7 +35,46 @@ export async function listCameras(): Promise<MediaDeviceInfo[]> {
   return all.filter((d) => d.kind === 'videoinput');
 }
 
+/** Stream simulasi 1280x720: gradien bergerak + lingkaran melayang + jam. Berhenti sendiri saat track dihentikan. */
+function openDemoStream(): MediaStream {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1280;
+  canvas.height = 720;
+  const ctx = canvas.getContext('2d')!;
+  const stream = canvas.captureStream(30);
+  const track = stream.getVideoTracks()[0]!;
+  const t0 = performance.now();
+
+  const draw = () => {
+    if (track.readyState === 'ended') return;
+    const t = (performance.now() - t0) / 1000;
+    const g = ctx.createLinearGradient(0, 0, 1280, 720);
+    g.addColorStop(0, `hsl(${(t * 20) % 360}, 45%, 22%)`);
+    g.addColorStop(1, `hsl(${(t * 20 + 90) % 360}, 45%, 38%)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 1280, 720);
+    for (let i = 0; i < 3; i++) {
+      const x = 640 + Math.sin(t * 0.8 + i * 2.1) * 360;
+      const y = 360 + Math.cos(t * 0.6 + i * 1.7) * 180;
+      ctx.beginPath();
+      ctx.arc(x, y, 90 + i * 24, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${0.1 + i * 0.05})`;
+      ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '600 44px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('KAMERA SIMULASI', 640, 330);
+    ctx.font = '400 28px system-ui, sans-serif';
+    ctx.fillText(new Date().toLocaleTimeString('id-ID'), 640, 380);
+    requestAnimationFrame(draw);
+  };
+  draw();
+  return stream;
+}
+
 async function openStream(deviceId: string | null): Promise<MediaStream> {
+  if (deviceId === DEMO_CAMERA_ID) return openDemoStream();
   const base: MediaTrackConstraints = { width: { ideal: 1920 }, height: { ideal: 1080 } };
   if (deviceId) {
     try {

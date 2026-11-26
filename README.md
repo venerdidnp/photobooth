@@ -4,7 +4,7 @@ Web app photobooth yang berjalan **lokal** di satu laptop dengan satu monitor ek
 
 - **Laptop** = panel operator di `/admin`.
 - **Monitor eksternal** = tampilan tamu di `/booth` (hanya untuk dilihat, bukan touchscreen).
-- Satu sesi = 3 foto. Strip portrait dirakit dari 3 foto + frame PNG, disimpan di laptop.
+- Satu sesi = jumlah foto sesuai slot frame (frame bawaan: 4 foto). Strip portrait dirakit dari foto + frame PNG, disimpan di laptop.
 - Tamu mencari fotonya lewat nomor sesi, mis. `PHOTO #042.png`.
 
 > **Status:** alur lokal lengkap (Fase 1) dan upload otomatis ke Google Drive dengan antrean + retry (Fase 2) sudah selesai. Upload Drive **baru diuji terhadap server Google tiruan**, belum terhadap Google asli. Lakukan uji coba nyata dulu sebelum hari acara (lihat "Hari acara").
@@ -31,7 +31,7 @@ Setelah menyala, server menampilkan dua alamat:
 | Operator (laptop) | http://localhost:3000/admin |
 | Tamu (monitor eksternal) | http://localhost:3000/booth |
 
-Setelah `npm install`, seluruh aplikasi berjalan **tanpa internet** (font dipasang lewat paket `@fontsource`, bukan CDN). Internet hanya dipakai untuk upload Drive (Fase 2) dan indikator ONLINE/OFFLINE.
+Setelah `npm install`, seluruh aplikasi berjalan **tanpa internet** (tidak ada CDN; font memakai Inter bila terpasang di komputer, kalau tidak otomatis font sistem). Internet hanya dipakai untuk upload Drive (Fase 2) dan indikator ONLINE/OFFLINE.
 
 Kalau repo ada di WSL: jalankan `npm start` di terminal WSL, lalu buka alamat di atas dari Chrome di Windows.
 
@@ -42,7 +42,7 @@ Kalau repo ada di WSL: jalankan `npm start` di terminal WSL, lalu buka alamat di
    - **Harus jendela tersendiri.** Tab yang tidak sedang tampil di-pause oleh Chrome sehingga video webcam berhenti dan foto bisa hitam.
    - Pakai **profil Chrome yang sama** dengan `/admin` supaya pilihan kamera cocok dan kamera bisa dipakai dua jendela.
    - Jangan diminimalkan selama acara.
-3. Di `/admin` pilih webcam dan frame. Indikator **BOOTH OK** di kanan atas harus hijau.
+3. Di `/admin` pilih webcam dan frame. Chip **Layar Tamu: Tersambung** di header harus hijau.
 4. Tampilan tamu otomatis menyesuaikan resolusi monitor (kanvas 1920x1080 diskalakan dengan rasio tetap).
 
 ### Suara (opsional)
@@ -56,19 +56,19 @@ Suara bisa dimatikan di Settings.
 
 ## Alur operator
 
-1. **MULAI**: tekan `SPACE` (atau tombol START SESSION). Tamu melihat READY, lalu hitung mundur 5 detik tiap foto, efek flash, jeda, dan seterusnya sampai 3 foto.
-2. Strip dirakit otomatis dan tampil di layar tamu serta panel operator (**Review**).
-3. Kalau ada yang mau diulang: pilih slot (boleh lebih dari satu) dengan tombol `1` `2` `3` atau tombol RETAKE di layar, lalu tekan `ENTER`. Hanya slot terpilih yang difoto ulang, lalu strip dirakit ulang. Bisa diulang berkali-kali.
-4. **SELESAI**: `ENTER` (atau FINISH & UPLOAD) tanpa slot terpilih. Strip disimpan di laptop, lalu layar tamu menampilkan nomor foto.
+1. **MULAI**: tekan `SPASI` (atau tombol **Mulai 4 Pose**). Tamu melihat "Siap?", lalu hitung mundur tiap foto, efek flash, jeda, dan seterusnya sampai semua pose selesai.
+2. Strip dirakit otomatis dan tampil di layar tamu, dan panel operator masuk mode review.
+3. Kalau ada yang mau diulang: pilih pose (boleh lebih dari satu) dengan tombol angka `1`-`4` atau tombol **Ulangi** di kartu pose, lalu tekan `ENTER` (atau **Ulangi Pose**). Hanya slot terpilih yang difoto ulang, lalu strip dirakit ulang. Bisa diulang berkali-kali.
+4. **SELESAI**: `ENTER` (atau **Simpan & Upload**) tanpa pose terpilih. Strip disimpan di laptop, lalu layar tamu menampilkan nomor foto.
 5. Layar kembali ke awal, siap untuk tamu berikutnya.
 
 ### Pintasan keyboard (jendela `/admin` harus aktif)
 
 | Tombol | Fungsi |
 |---|---|
-| `SPACE` | Mulai sesi (saat idle) |
-| `1` `2` `3` | Pilih/batalkan slot untuk diulang (saat review) |
-| `ENTER` | Mulai retake bila ada slot terpilih, kalau tidak: selesai |
+| `SPASI` | Mulai sesi (saat idle) |
+| `1` - `4` | Pilih/batalkan pose untuk diulang (saat review) |
+| `ENTER` | Mulai retake bila ada pose terpilih, kalau tidak: selesai |
 | `ESC` dua kali | Batalkan sesi (ESC pertama hanya memperingatkan) |
 
 ## Menyiapkan Google Drive
@@ -112,16 +112,16 @@ Perintah lain: `npm run drive:setup -- --reauth` (login ulang bila token dicabut
 
 ### 3. Pastikan jalan
 
-Jalankan `npm start`. Di log server harus muncul `Google Drive: terkonfigurasi`. Di `/admin` → **SETTINGS**, panel *Google Drive* harus menampilkan `CONNECTED`, akun, dan nama folder, dan chip di kanan atas menjadi **DRIVE OK**. Lakukan satu sesi percobaan dan pastikan `PHOTO #001.png` muncul di folder Drive.
+Jalankan `npm start`. Di log server harus muncul `Google Drive: terkonfigurasi`. Di `/admin` → **Pengaturan**, panel *Google Drive* harus menampilkan `Terhubung`, akun, dan nama folder, dan chip di header menjadi **Drive OK**. Lakukan satu sesi percobaan dan pastikan `PHOTO #001.png` muncul di folder Drive.
 
 ### Cara kerja antrean
 
 | Kejadian | Perlakuan |
 |---|---|
-| Internet mati / timeout | Tetap **QUEUED**, dicoba lagi dengan jeda 2, 4, 8, 16, 30 detik (maks. 30 dtk). **Tidak pernah dianggap gagal**; saat internet kembali, langsung dicoba sekarang. Layar tamu memakai tampilan "PHOTO SAVED LOCALLY". |
+| Internet mati / timeout | Tetap **Antre**, dicoba lagi dengan jeda 2, 4, 8, 16, 30 detik (maks. 30 dtk). **Tidak pernah dianggap gagal**; saat internet kembali, langsung dicoba sekarang. Layar tamu memakai tampilan "Foto Tersimpan di Laptop". |
 | Google error sementara (429/5xx) | Backoff 5 dtk hingga 5 menit; **FAILED** setelah 8 percobaan. |
 | Token dicabut/kedaluwarsa, folder tidak bisa diakses, dll. | Langsung **FAILED** dengan pesan di halaman Queue dan chip **DRIVE ERROR**. Perbaiki (mis. `npm run drive:setup -- --reauth`), lalu tekan **RETRY**. |
-| Server mati/restart | Antrean tersimpan di disk; item yang sedang diupload kembali ke QUEUED dan lanjut otomatis. Sesi selesai yang belum pernah masuk antrean ikut dimasukkan saat server menyala. |
+| Server mati/restart | Antrean tersimpan di disk; item yang sedang diupload kembali ke Antre dan lanjut otomatis. Sesi selesai yang belum pernah masuk antrean ikut dimasukkan saat server menyala. |
 | Upload diulang setelah balasan hilang | Tidak ada file ganda: setiap upload membawa kunci unik sesi dan Drive dicek dulu. |
 
 Catatan:
@@ -129,9 +129,11 @@ Catatan:
 - Panel Settings: **CHANGE FOLDER** (tempel link/ID folder yang dibuat aplikasi) dan **DISCONNECT** (hapus token; sambungkan lagi dengan `drive:setup`).
 - Progress upload per-byte tidak ditampilkan (file dikirim sekaligus); item yang sedang diupload tampil setengah penuh.
 
-## Latar layar tamu
+## Tampilan
 
-Taruh gambar di **`public/bg/background.jpg`** (disarankan 1920x1080). Kalau file belum ada, layar tamu memakai gradien sunset sebagai cadangan. Setelah menaruh file, jalankan ulang `npm start` (atau `npm run build`) supaya ikut tersalin.
+- **/admin** (laptop operator): tema terang minimalis (font Inter), responsif. Halaman **Kontrol** (preview monitor, slot pose + retake, riwayat sesi, kamera & pengaturan sesi, frame), **Antrean Upload**, dan **Pengaturan** (Google Drive + lokasi penyimpanan). Tombol **Buka Layar Tamu** di header membuka `/booth` di jendela baru.
+- **/booth** (monitor tamu): tema gelap, pasif, tanpa elemen interaktif. Tidak ada lagi gambar latar `public/bg/background.jpg`.
+- **Kamera simulasi**: kalau tidak ada webcam (atau untuk uji coba), pilih *Kamera simulasi* di panel Kamera & Sesi. Layar tamu ikut memakainya.
 
 ## Frame foto
 
@@ -156,7 +158,7 @@ Satu frame = sepasang file di folder `frames/`: `<nama>.png` (PNG transparan den
 - `slots` = posisi dan ukuran tiap lubang foto. Jumlah slot = jumlah foto per sesi.
 - `name` dan `image` opsional (default: nama file dan `<nama>.png`).
 - Menambah frame baru **cukup menaruh PNG + JSON**, tanpa mengubah kode. Frame baru muncul di panel operator dalam beberapa detik. File yang tidak valid dilewati dan alasannya dicatat di log server.
-- Frame bawaan saat ini hanya satu: `frames/dies-natalis.*` (strip 4 foto, 1080x1920).
+- Frame bawaan hanya satu: `frames/dies-natalis.*` (strip 4 foto, 1080x1920).
 
 Foto diletakkan di slot dengan pemotongan tengah (cover), lalu PNG frame digambar di atasnya.
 
@@ -194,8 +196,7 @@ server/src/   server Fastify + WebSocket, state machine sesi (session-machine.ts
 shared/       tipe & protokol bersama server dan frontend
 web/src/      React + Vite: booth/ (layar tamu), admin/ (panel operator), components/, lib/, styles/
 frames/       frame PNG + JSON
-public/bg/    latar layar tamu
-scripts/      pembuat frame contoh
+scripts/      setup Google Drive (drive-setup.ts)
 ```
 
 ### Cara kerja singkat
@@ -206,40 +207,39 @@ scripts/      pembuat frame contoh
 
 ## Desain dan catatan keputusan
 
-Desain mengikuti Figma (file `Hh1Y38fPNp2uUTZhEenZZr`): warna jadi CSS variables di `web/src/styles/tokens.css` (satu-satunya tempat hex), font Press Start 2P / Silkscreen / VT323 lewat `@fontsource`. Komponen `Button`, `StatusChip`, `Keycap`, `SlotBadge`, `ScenePhoto` mengikuti halaman "Components".
+Desain mengikuti `photobooth_dies_natalis_himatifa_level_6.html` (operator terang + layar tamu gelap): warna jadi CSS variables di `web/src/styles/tokens.css` (satu-satunya tempat hex). Teks acara memakai "Dies Natalis Informatika ke-6".
 
 Keputusan yang diambil (bisa diubah):
 
-- **Layar G9 "Offline"** = tidak ada internet saat sesi selesai: "PHOTO SAVED LOCALLY". Bukan layar kamera/WebSocket putus.
-- **Gambar latar di Figma tidak dipakai** (itu gambar placeholder). Latar selalu `public/bg/background.jpg` dengan gradien sunset sebagai cadangan.
-- **Retake multi-slot**: tombol RETAKE di O2 bersifat toggle. Saat ada slot terpilih muncul tombol "RETAKE n", dan FINISH dinonaktifkan sampai pilihan dikosongkan.
-- **Layar hasil (G6–G9)** menampilkan strip yang sudah dirakit dengan frame, bukan tiga foto mentah seperti mockup.
-- **Settings**: NUMBER OF SHOTS hanya tampilan (ditentukan jumlah slot frame). "Mirror live preview" membalik tampilan kamera di layar tamu seperti cermin; foto hasil tidak dibalik. Jeda antar foto default 5 detik mengikuti Figma.
+- **Layar "Offline"** = tidak ada internet saat sesi selesai: "Foto Tersimpan di Laptop". Bukan layar kamera/WebSocket putus.
+- **Retake multi-pose**: tombol **Ulangi** di kartu pose bersifat toggle. Saat ada pose terpilih muncul tombol **Ulangi Pose n**, dan **Simpan & Upload** dinonaktifkan sampai pilihan dikosongkan.
+- **Layar hasil** menampilkan strip yang sudah dirakit dengan frame, bukan foto mentah.
+- **Pengaturan sesi** (hitung mundur, jeda, mirror, suara, flash) ada di kartu *Kamera & Sesi* di halaman Kontrol. Jumlah pose ditentukan jumlah slot frame. Mirror membalik tampilan kamera di layar tamu seperti cermin; foto hasil tidak dibalik.
 - **Preview kamera di panel operator** dimatikan selama sesi supaya tidak berebut kamera dengan `/booth`.
-- **Progress layar SAVING** menampilkan langkah penyimpanan yang sebenarnya (bukan persentase palsu).
-- **Gallery** memakai foto asli sebagai thumbnail (belum ada thumbnail kecil di server); cukup untuk ratusan sesi di laptop, tetapi bisa diperbaiki bila terasa berat.
+- **Progres layar Menyimpan** menampilkan langkah penyimpanan yang sebenarnya (bukan persentase palsu).
+- **Riwayat Sesi** memakai `strip.png` asli sebagai thumbnail (belum ada thumbnail kecil di server); cukup untuk puluhan sesi terakhir (40 ditampilkan). Klik untuk membuka strip penuh dan mengunduhnya.
 - Server hanya mendengarkan `127.0.0.1` (tidak terbuka ke jaringan). Ubah lewat `HOST` di `.env` bila perlu.
 
 ## Hari acara
 
 **Sehari sebelumnya (butuh internet):**
 1. `npm install` dan `npm start` sekali; pastikan tidak ada error.
-2. Siapkan Drive (bagian di atas) dan lakukan **satu sesi percobaan penuh**: `PHOTO #001.png` harus muncul di folder Drive dan `/admin` menunjukkan **DRIVE OK**.
-3. Letakkan `public/bg/background.jpg` dan frame asli di `frames/` (PNG + JSON).
+2. Siapkan Drive (bagian di atas) dan lakukan **satu sesi percobaan penuh**: `PHOTO #001.png` harus muncul di folder Drive dan `/admin` menunjukkan **Drive OK**.
+3. Pastikan frame asli ada di `frames/` (PNG + JSON).
 4. Hapus data percobaan supaya nomor mulai dari 001: hentikan server, hapus isi folder `data/` **kecuali** `google-token.json` dan `drive-folder.json`. Dan pakai folder Drive baru bila folder percobaan sudah berisi foto.
-5. Uji dengan Wi-Fi dimatikan: selesaikan satu sesi, layar tamu harus menampilkan "PHOTO SAVED LOCALLY", lalu nyalakan Wi-Fi dan lihat strip terupload sendiri.
+5. Uji dengan Wi-Fi dimatikan: selesaikan satu sesi, layar tamu harus menampilkan "Foto Tersimpan di Laptop", lalu nyalakan Wi-Fi dan lihat strip terupload sendiri.
 
 **Saat acara:**
 1. Colok webcam dan monitor eksternal, lalu `npm start` di folder proyek.
 2. Chrome: `/admin` di laptop; **jendela baru** `/booth` diseret ke monitor eksternal, F11 (klik sekali di dalamnya bila ingin suara).
-3. Di `/admin` periksa chip kanan atas: **BOOTH OK**, **ONLINE**, **DRIVE OK**; pilih webcam dan frame.
-4. Tekan `SPACE` untuk tiap tamu. Selesaikan dengan `ENTER`. Tamu mencari `PHOTO #nomor` di folder Drive.
-5. Pantau halaman **QUEUE**: bila ada **FAILED**, baca pesannya, perbaiki, lalu **RETRY**.
+3. Di `/admin` periksa chip di header: **Layar Tamu: Tersambung**, **Online**, **Drive OK**; pilih webcam dan frame.
+4. Tekan `SPASI` untuk tiap tamu. Selesaikan dengan `ENTER`. Tamu mencari `PHOTO #nomor` di folder Drive.
+5. Pantau halaman **Antrean Upload**: bila ada **Gagal**, baca pesannya, perbaiki, lalu **Coba Lagi**.
 
 **Bila ada masalah:**
-- *BOOTH belum OK*: pastikan jendela `/booth` terbuka (bukan tab latar belakang) dan tidak diminimalkan.
+- *Layar Tamu: Belum Dibuka*: pastikan jendela `/booth` terbuka (bukan tab latar belakang) dan tidak diminimalkan.
 - *Layar hitam di viewfinder*: webcam terlepas; cabut-colok. Aplikasi mencoba membukanya lagi tiap 2 detik.
-- *DRIVE ERROR*: baca pesan di SETTINGS atau QUEUE. Token dicabut → `npm run drive:setup -- --reauth` lalu RETRY.
+- *DRIVE ERROR*: baca pesan di Pengaturan atau Antrean Upload. Token dicabut → `npm run drive:setup -- --reauth` lalu Coba Lagi.
 - *Server mati*: jalankan `npm start` lagi. Foto, nomor sesi, dan antrean upload semuanya selamat.
 - *Cadangan terakhir*: semua foto ada di `data/sessions/<nomor>/strip.png` dan bisa disalin manual.
 

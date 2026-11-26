@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { formatSessionNo, stripFileName, type QueueItem, type QueueSummary } from '../../../shared/protocol';
 import { Button } from '../components/Button';
-import { Panel } from '../components/Panel';
-import { SegmentedBar } from '../components/SegmentedBar';
+import { Card } from '../components/Card';
+import { Progress } from '../components/Progress';
 import { StatusChip } from '../components/StatusChip';
 import { api } from '../lib/server';
-import { TopBar, type AdminCtx } from './parts';
+import type { AdminCtx } from './parts';
 
 const mb = (bytes: number): string => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
-/** O3: antrean upload ke Google Drive (diisi pada Fase 2; di Fase 1 selalu kosong). */
+/** Antrean upload ke Google Drive. */
 export function QueuePage({ ctx }: { ctx: AdminCtx }) {
   const { state, send } = ctx;
   const [items, setItems] = useState<QueueItem[]>([]);
@@ -25,7 +25,7 @@ export function QueuePage({ ctx }: { ctx: AdminCtx }) {
       api<{ items: QueueItem[] }>('/api/queue')
         .then((r) => alive && setItems(r.items))
         .catch(() => undefined);
-    load();
+    void load();
     const t = window.setInterval(load, 4000);
     return () => {
       alive = false;
@@ -37,81 +37,86 @@ export function QueuePage({ ctx }: { ctx: AdminCtx }) {
 
   return (
     <>
-      <TopBar
-        title="UPLOAD QUEUE"
-        state={state}
-        extra={<StatusChip tone={pending > 0 ? 'orange' : 'turquoise'}>{`${pending} PENDING`}</StatusChip>}
-      />
-      <div className="admin-body">
-        <div className="col" style={{ width: 1256 }}>
-          <div className="q-tiles">
-            <SummaryTile kind="queued" label="QUEUED" value={s.queued} />
-            <SummaryTile kind="uploading" label="UPLOADING" value={s.uploading} />
-            <SummaryTile kind="done" label="DONE" value={s.done} />
-            <SummaryTile kind="failed" label="FAILED" value={s.failed} />
-          </div>
+      <div className="q-tiles">
+        <SummaryTile kind="queued" label="Antre" value={s.queued} />
+        <SummaryTile kind="uploading" label="Mengunggah" value={s.uploading} />
+        <SummaryTile kind="done" label="Selesai" value={s.done} />
+        <SummaryTile kind="failed" label="Gagal" value={s.failed} />
+      </div>
 
-          <Panel title="RECENT UPLOADS" className="full">
-            <div className="q-head t-label-s is-soft">
-              <span className="cell c-file">FILE</span>
-              <span className="cell c-session">SESSION</span>
-              <span className="cell c-size">SIZE</span>
-              <span className="cell c-status">STATUS</span>
-              <span className="cell c-progress">PROGRESS</span>
-              <span className="cell c-action">ACTION</span>
-            </div>
-            {items.length === 0 ? (
-              <p className="empty-note">
-                {state.drive.configured
-                  ? 'Nothing waiting. Finished strips will appear here.'
-                  : 'Google Drive upload is not set up yet. Strips are saved on this laptop.'}
-              </p>
-            ) : (
-              <div className="q-list">
-                {items.map((it, i) => (
-                  <div key={it.id} className={i % 2 === 0 ? 'q-row q-row--alt' : 'q-row'} title={it.error}>
-                    <span className="cell c-file t-body-l nowrap">{stripFileName(it.sessionNo)}</span>
-                    <span className="cell c-session t-label-s">#{formatSessionNo(it.sessionNo)}</span>
-                    <span className="cell c-size t-body-l nowrap">{mb(it.sizeBytes)}</span>
-                    <span className="cell c-status">
+      <Card
+        title="Upload Terbaru"
+        sub="Strip yang sudah selesai masuk antrean ini lalu diunggah di latar belakang."
+        aside={<StatusChip tone={pending > 0 ? 'warn' : 'ok'}>{`${pending} menunggu`}</StatusChip>}
+      >
+        {items.length === 0 ? (
+          <p className="empty-note">
+            {state.drive.configured
+              ? 'Tidak ada yang menunggu. Strip yang selesai akan muncul di sini.'
+              : 'Upload Google Drive belum diatur. Strip tersimpan di laptop ini.'}
+          </p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="q-table">
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Sesi</th>
+                  <th>Ukuran</th>
+                  <th>Status</th>
+                  <th>Progres</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((it) => (
+                  <tr key={it.id} title={it.error}>
+                    <td className="nowrap">{stripFileName(it.sessionNo)}</td>
+                    <td>#{formatSessionNo(it.sessionNo)}</td>
+                    <td className="nowrap">{mb(it.sizeBytes)}</td>
+                    <td>
                       <StatusChip status={it.status} />
-                    </span>
-                    <span className="cell c-progress">
-                      <SegmentedBar size="sm" filled={it.status === 'done' ? 10 : it.progress * 10} />
-                    </span>
-                    <span className="cell c-action">
+                    </td>
+                    <td className="q-progress">
+                      <Progress size="sm" value={it.status === 'done' ? 1 : it.progress} />
+                    </td>
+                    <td>
                       {it.status === 'failed' ? (
-                        <Button
-                          variant="secondary"
-                          size="xs"
-                          style={{ boxShadow: 'var(--shadow-hard-4)' }}
-                          onClick={() => send({ type: 'queue.retry', id: it.id })}
-                        >
-                          RETRY
+                        <Button variant="secondary" size="sm" onClick={() => send({ type: 'queue.retry', id: it.id })}>
+                          Coba Lagi
                         </Button>
                       ) : (
-                        <span className="t-label-s is-soft">-</span>
+                        <span className="muted">-</span>
                       )}
-                    </span>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            )}
-            {!state.drive.configured && items.length > 0 && (
-              <p className="empty-note">Google Drive is not set up, so strips wait here (and stay on this laptop) until it is.</p>
-            )}
-            {lastProblem && <p className="empty-note">Last problem: {lastProblem}</p>}
-          </Panel>
-        </div>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        )}
+        {!state.drive.configured && items.length > 0 && (
+          <p className="empty-note" style={{ marginTop: 12 }}>
+            Google Drive belum diatur, jadi strip menunggu di sini (dan tetap ada di laptop ini) sampai Drive terhubung.
+          </p>
+        )}
+        {lastProblem && (
+          <p className="empty-note" style={{ marginTop: 12 }}>
+            Masalah terakhir: {lastProblem}
+          </p>
+        )}
+      </Card>
     </>
   );
 }
 
 function SummaryTile({ kind, label, value }: { kind: string; label: string; value: number }) {
   return (
-    <div className={`q-tile q-tile--${kind}`}>
-      <span className="t-label-m">{label}</span>
+    <div className="q-tile">
+      <span className="q-tile__label">
+        <span className={`dot dot--${kind}`} />
+        {label}
+      </span>
       <span className="q-tile__value">{value}</span>
     </div>
   );

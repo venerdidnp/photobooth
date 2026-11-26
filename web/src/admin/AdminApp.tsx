@@ -1,21 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FrameInfo, Settings } from '../../../shared/protocol';
-import { Stage } from '../components/Stage';
-import { listCameras, loadCameraId, saveCameraId, useCamera } from '../lib/camera';
+import { DEMO_CAMERA_ID, listCameras, loadCameraId, saveCameraId, useCamera } from '../lib/camera';
 import { api, useServer } from '../lib/server';
 import { unlockAudioOnInteraction } from '../lib/sfx';
 import { ControlPage } from './ControlPage';
-import { GalleryPage } from './GalleryPage';
-import { Sidebar, Toast, type AdminCtx, type Tab } from './parts';
+import { Header, Toast, type AdminCtx, type Tab } from './parts';
 import { QueuePage } from './QueuePage';
-import { ReviewPage } from './ReviewPage';
 import { SettingsPage } from './SettingsPage';
 
-const isTab = (v: string): v is Tab => ['control', 'queue', 'gallery', 'settings'].includes(v);
+const ESC_HINT = 'Tekan ESC sekali lagi untuk membatalkan sesi';
+
+const isTab = (v: string): v is Tab => ['control', 'queue', 'settings'].includes(v);
 
 /**
- * Panel operator di laptop. Layar tetap 1440x900 yang diskalakan ke jendela.
- * Pintasan: SPACE mulai, 1-9 pilih slot ulang, ENTER ulang/selesai, ESC dua kali batalkan.
+ * Panel operator di laptop (responsif).
+ * Pintasan: SPASI mulai, 1-9 pilih pose yang diulang, ENTER ulang/selesai, ESC dua kali batalkan.
  */
 export function AdminApp() {
   const { state, connected, send } = useServer('admin');
@@ -35,23 +34,22 @@ export function AdminApp() {
   const preview = useCamera(cameraId, tab === 'control' && !sessionRunning);
 
   // --- daftar kamera + ingat pilihan terakhir
-  useEffect(() => {
-    let alive = true;
-    const refresh = () =>
-      listCameras()
-        .then((list) => {
-          if (!alive) return;
-          setDevices(list);
-          setCameraId((cur) => (cur && list.some((d) => d.deviceId === cur) ? cur : (list[0]?.deviceId ?? null)));
-        })
-        .catch(() => undefined);
-    void refresh();
-    navigator.mediaDevices?.addEventListener('devicechange', refresh);
-    return () => {
-      alive = false;
-      navigator.mediaDevices?.removeEventListener('devicechange', refresh);
-    };
+  const refreshDevices = useCallback(() => {
+    return listCameras()
+      .then((list) => {
+        setDevices(list);
+        // 'demo' bukan perangkat nyata: tetap dipertahankan walau tidak ada di daftar
+        setCameraId((cur) =>
+          cur === DEMO_CAMERA_ID || (cur && list.some((d) => d.deviceId === cur)) ? cur : (list[0]?.deviceId ?? null),
+        );
+      })
+      .catch(() => undefined);
   }, []);
+  useEffect(() => {
+    void refreshDevices();
+    navigator.mediaDevices?.addEventListener('devicechange', refreshDevices);
+    return () => navigator.mediaDevices?.removeEventListener('devicechange', refreshDevices);
+  }, [refreshDevices]);
 
   // beri tahu server (dan lewat server: /booth) kamera mana yang dipakai
   useEffect(() => {
@@ -129,8 +127,8 @@ export function AdminApp() {
           send({ type: 'cancel' });
         } else {
           escAt.current = now;
-          setToast('PRESS ESC AGAIN TO CANCEL THE SESSION');
-          window.setTimeout(() => setToast((t) => (t === 'PRESS ESC AGAIN TO CANCEL THE SESSION' ? null : t)), 2000);
+          setToast(ESC_HINT);
+          window.setTimeout(() => setToast((t) => (t === ESC_HINT ? null : t)), 2000);
         }
       }
     };
@@ -140,13 +138,9 @@ export function AdminApp() {
 
   if (!state) {
     return (
-      <Stage width={1440} height={900}>
-        <div className="admin">
-          <p className="t-title-m" style={{ padding: 48 }}>
-            {connected ? 'LOADING...' : 'CONNECTING TO SERVER...'}
-          </p>
-        </div>
-      </Stage>
+      <div className="op">
+        <p className="op-main muted">{connected ? 'Memuat...' : 'Menyambung ke server...'}</p>
+      </div>
     );
   }
 
@@ -155,23 +149,27 @@ export function AdminApp() {
     send,
     frames,
     saveSettings,
-    camera: { devices, selectedId: cameraId, select: selectCamera, stream: preview.stream, error: preview.error },
+    goTab: changeTab,
+    camera: {
+      devices,
+      selectedId: cameraId,
+      select: selectCamera,
+      refresh: () => void refreshDevices(),
+      stream: preview.stream,
+      error: preview.error,
+    },
   };
 
   let page;
-  if (phase === 'review' && tab === 'control') page = <ReviewPage ctx={ctx} />;
-  else if (tab === 'queue') page = <QueuePage ctx={ctx} />;
-  else if (tab === 'gallery') page = <GalleryPage ctx={ctx} />;
+  if (tab === 'queue') page = <QueuePage ctx={ctx} />;
   else if (tab === 'settings') page = <SettingsPage ctx={ctx} />;
   else page = <ControlPage ctx={ctx} />;
 
   return (
-    <Stage width={1440} height={900}>
-      <div className="admin">
-        <Sidebar tab={tab} onTab={changeTab} />
-        {page}
-        <Toast text={toast} />
-      </div>
-    </Stage>
+    <div className="op">
+      <Header tab={tab} onTab={changeTab} state={state} />
+      <main className="op-main">{page}</main>
+      <Toast text={toast} />
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PublicState, ServerMsg } from '../../../shared/protocol';
 import { LiveVideo } from '../components/LiveVideo';
-import { ScenePhoto } from '../components/ScenePhoto';
 import { Stage } from '../components/Stage';
 import { captureFrame, useCamera } from '../lib/camera';
 import { composeStrip } from '../lib/compose';
@@ -105,9 +104,7 @@ export function BoothApp() {
   if (!state) {
     return (
       <Stage width={1920} height={1080}>
-        <div className="booth">
-          <ScenePhoto />
-        </div>
+        <div className="booth" />
       </Stage>
     );
   }
@@ -117,7 +114,7 @@ export function BoothApp() {
   ) : (
     <>
       <LiveVideo stream={null} mirror={false} videoRef={videoRef} />
-      <p className="viewfinder__empty t-label-m">{error ? 'CAMERA NOT AVAILABLE' : 'STARTING CAMERA...'}</p>
+      <p className="booth-stage__empty">{error ? 'Kamera tidak tersedia' : 'Memulai kamera...'}</p>
     </>
   );
 
