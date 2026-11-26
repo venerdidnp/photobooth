@@ -1,0 +1,12 @@
+{
+  "name": "Arcade Recap (2 kiri + 2 kanan)",
+  "image": "arcade-recap.png",
+  "width": 1080,
+  "height": 1920,
+  "slots": [
+    { "x": 56,  "y": 650,  "width": 448, "height": 252 },
+    { "x": 56,  "y": 1098, "width": 448, "height": 252 },
+    { "x": 576, "y": 650,  "width": 448, "height": 252 },
+    { "x": 576, "y": 1098, "width": 448, "height": 252 }
+  ]
+}

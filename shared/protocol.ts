@@ -30,7 +30,8 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  frameId: null,
+  // Frame awal di instalasi baru (data/ kosong). Kalau id ini tidak ada, server memakai frame pertama (urut abjad).
+  frameId: 'dies-natalis',
   countdownSec: 5,
   pauseSec: 5,
   mirrorPreview: true,

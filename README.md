@@ -35,6 +35,17 @@ Setelah `npm install`, seluruh aplikasi berjalan **tanpa internet** (tidak ada C
 
 Kalau repo ada di WSL: jalankan `npm start` di terminal WSL, lalu buka alamat di atas dari Chrome di Windows.
 
+### Mulai cepat di laptop baru (mis. MacBook)
+
+1. Pasang **Node.js 24** (https://nodejs.org atau `brew install node@24`) dan **Google Chrome**. Cek dengan `node -v`.
+2. Ambil proyeknya (`git clone <url-repo>` atau salin foldernya). **Jangan salin folder `node_modules`**: isinya khusus komputer asal dan tidak jalan di laptop lain.
+3. Di folder proyek: `npm install`, lalu `npm start`. Butuh internet hanya untuk `npm install`.
+4. Buka `http://localhost:3000/admin` di Chrome (izinkan kamera). Buka `http://localhost:3000/booth` di **jendela Chrome baru**, seret ke monitor eksternal, lalu layar penuh (Mac: `Ctrl+Cmd+F`, Windows: `F11`).
+5. Frame sudah ikut di folder `frames/`. File yang **tidak** ikut git dan hanya perlu disalin kalau dipakai: `.env`, `data/` (foto hasil sesi, token Drive).
+6. Mac jangan sampai tidur selama acara: jalankan `caffeinate -d` di terminal lain.
+
+Tanpa Google Drive, hasil ada di `data/sessions/<nomor>/strip.png`.
+
 ## Menyiapkan layar
 
 1. Buka `/admin` di Chrome di laptop. Izinkan akses kamera.
@@ -198,7 +209,7 @@ Satu frame = sepasang file di folder `frames/`: `<nama>.png` (PNG transparan den
 - `slots` = posisi dan ukuran tiap lubang foto. Jumlah slot = jumlah foto per sesi.
 - `name` dan `image` opsional (default: nama file dan `<nama>.png`).
 - Menambah frame baru **cukup menaruh PNG + JSON**, tanpa mengubah kode. Frame baru muncul di panel operator dalam beberapa detik. File yang tidak valid dilewati dan alasannya dicatat di log server.
-- Frame bawaan hanya satu: `frames/dies-natalis.*` (strip 4 foto, 1080x1920).
+- Frame bawaan ada dua (keduanya 4 foto, 1080x1920): `frames/dies-natalis.*` (4 foto bertumpuk ke bawah, jadi pilihan awal) dan `frames/arcade-recap.*` (2 kiri + 2 kanan; urutan foto: kiri atas, kiri bawah, kanan atas, kanan bawah). Operator memilihnya di kartu Frame di halaman Kontrol.
 
 Foto diletakkan di slot dengan pemotongan tengah (cover), lalu PNG frame digambar di atasnya.
 
