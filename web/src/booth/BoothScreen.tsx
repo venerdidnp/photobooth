@@ -52,9 +52,9 @@ function AttractScreen() {
   return (
     <>
       <div className="attract-title">
-        <div className="attract-tagline t-label-m">PHOTOBOOTH: 3-SHOT STRIP</div>
+        <div className="attract-tagline t-label-m">PHOTOBOOTH: 4-SHOT STRIP</div>
         <p className="attract-line">DIES NATALIS</p>
-        <p className="attract-line attract-line--accent">HIMATIFA LEVEL 6</p>
+        <p className="attract-line attract-line--accent">INFORMATIKA KE-6</p>
       </div>
       <p className="attract-press t-title-l">{'>> PRESS START <<'}</p>
       <p className="attract-wait">WAITING FOR NEXT PLAYER...</p>
@@ -67,7 +67,7 @@ function Header({ sessionNo }: { sessionNo: number | null }) {
     <div className="booth-header">
       <div className="booth-logo">
         <PixelLogo />
-        <span className="t-title-s nowrap">DIES NATALIS HIMATIFA LEVEL 6</span>
+        <span className="t-title-s nowrap">DIES NATALIS INFORMATIKA KE-6</span>
       </div>
       {sessionNo !== null && (
         <div className="booth-session-chip t-label-m nowrap">SESSION #{formatSessionNo(sessionNo)}</div>
@@ -233,7 +233,7 @@ function CaptureScreen({
           );
         })}
         <p className="t-label-s is-soft" style={{ whiteSpace: 'pre' }}>
-          {`HIMATIFA 6  #${formatSessionNo(no)}`}
+          {`INFORMATIKA 6  #${formatSessionNo(no)}`}
         </p>
       </div>
     </div>
@@ -308,7 +308,7 @@ function ResultScreen({ state }: { state: PublicState }) {
             ))
           )}
           <p className="t-label-s is-soft" style={{ whiteSpace: 'pre' }}>
-            {`HIMATIFA 6  #${label}`}
+            {`INFORMATIKA 6  #${label}`}
           </p>
         </div>
       </div>

@@ -1,0 +1,12 @@
+{
+  "name": "Dies Natalis Informatika",
+  "image": "dies-natalis.png",
+  "width": 1080,
+  "height": 1920,
+  "slots": [
+    { "x": 274, "y": 307,  "width": 535, "height": 300 },
+    { "x": 274, "y": 640,  "width": 535, "height": 300 },
+    { "x": 274, "y": 973,  "width": 535, "height": 300 },
+    { "x": 274, "y": 1306, "width": 535, "height": 300 }
+  ]
+}

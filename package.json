@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Photobooth Dies Natalis HIMATIFA Level 6 (lokal, 1 laptop + 1 monitor)",
+  "description": "Photobooth Dies Natalis Informatika ke-6 (lokal, 1 laptop + 1 monitor)",
   "scripts": {
     "start": "vite build && tsx server/src/index.ts",
     "serve": "tsx server/src/index.ts",
@@ -11,7 +11,6 @@
     "dev": "concurrently -k -n server,web -c blue,magenta \"tsx watch server/src/index.ts\" \"vite\"",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "make-frame": "tsx scripts/make-sample-frame.ts",
     "drive:setup": "tsx scripts/drive-setup.ts"
   },
   "dependencies": {

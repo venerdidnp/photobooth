@@ -1,4 +1,4 @@
-# Photobooth Dies Natalis HIMATIFA Level 6
+# Photobooth Dies Natalis Informatika ke-6
 
 Web app photobooth yang berjalan **lokal** di satu laptop dengan satu monitor eksternal. Tidak ada print dan tidak ada QR code.
 
@@ -80,7 +80,7 @@ Dilakukan **sekali** (± 10 menit, butuh internet):
 ### 1. Membuat kredensial di Google Cloud Console
 
 1. Buka https://console.cloud.google.com dan login dengan akun Google panitia (yang akan memiliki foto-foto ini).
-2. Buat proyek baru (menu pemilih proyek di atas, **New Project**), mis. `photobooth-himatifa`.
+2. Buat proyek baru (menu pemilih proyek di atas, **New Project**), mis. `photobooth-informatika`.
 3. **APIs & Services → Library**, cari **Google Drive API**, klik **Enable**.
 4. **APIs & Services → OAuth consent screen** (di tampilan baru: **Google Auth Platform**):
    - User type: **External**. Isi nama aplikasi (mis. `Photobooth`), email dukungan, dan email kontak developer.
@@ -98,7 +98,7 @@ Dilakukan **sekali** (± 10 menit, butuh internet):
 ### 2. Login dan buat folder tujuan
 
 ```bash
-npm run drive:setup -- --create-folder "Photobooth HIMATIFA 6"
+npm run drive:setup -- --create-folder "Photobooth Informatika 6"
 ```
 
 - Script mencetak sebuah alamat. **Buka di browser**, login dengan akun panitia, dan setujui akses. (Di WSL alamat itu dibuka dari Chrome di Windows; pengalihan ke `127.0.0.1` otomatis sampai ke script.)
@@ -139,14 +139,15 @@ Satu frame = sepasang file di folder `frames/`: `<nama>.png` (PNG transparan den
 
 ```json
 {
-  "name": "Sunset",
-  "image": "sunset.png",
-  "width": 800,
-  "height": 2000,
+  "name": "Dies Natalis Informatika",
+  "image": "dies-natalis.png",
+  "width": 1080,
+  "height": 1920,
   "slots": [
-    { "x": 80, "y": 100,  "width": 640, "height": 480 },
-    { "x": 80, "y": 640,  "width": 640, "height": 480 },
-    { "x": 80, "y": 1180, "width": 640, "height": 480 }
+    { "x": 274, "y": 307,  "width": 535, "height": 300 },
+    { "x": 274, "y": 640,  "width": 535, "height": 300 },
+    { "x": 274, "y": 973,  "width": 535, "height": 300 },
+    { "x": 274, "y": 1306, "width": 535, "height": 300 }
   ]
 }
 ```
@@ -155,7 +156,7 @@ Satu frame = sepasang file di folder `frames/`: `<nama>.png` (PNG transparan den
 - `slots` = posisi dan ukuran tiap lubang foto. Jumlah slot = jumlah foto per sesi.
 - `name` dan `image` opsional (default: nama file dan `<nama>.png`).
 - Menambah frame baru **cukup menaruh PNG + JSON**, tanpa mengubah kode. Frame baru muncul di panel operator dalam beberapa detik. File yang tidak valid dilewati dan alasannya dicatat di log server.
-- `frames/sunset.*` hanyalah **frame contoh untuk testing**. Buat ulang dengan `npm run make-frame`.
+- Frame bawaan saat ini hanya satu: `frames/dies-natalis.*` (strip 4 foto, 1080x1920).
 
 Foto diletakkan di slot dengan pemotongan tengah (cover), lalu PNG frame digambar di atasnya.
 

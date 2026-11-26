@@ -142,7 +142,7 @@ async function main() {
 
   if (!envFolder) {
     console.log('\nBelum ada folder tujuan. Pilih salah satu:');
-    console.log('  - jalankan: npm run drive:setup -- --create-folder "Photobooth HIMATIFA 6"  (disarankan)');
+    console.log('  - jalankan: npm run drive:setup -- --create-folder "Photobooth Informatika 6"  (disarankan)');
     console.log('  - atau isi DRIVE_FOLDER_ID di .env lalu jalankan setup ini lagi.');
     return;
   }

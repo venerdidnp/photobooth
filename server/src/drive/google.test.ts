@@ -195,10 +195,10 @@ describe('folder', () => {
     const { drive, calls } = make((call) =>
       call.url.startsWith(ep.token) ? json({ access_token: 'AT', expires_in: 3600 }) : json({ id: 'NEWFOLDER' }),
     );
-    expect(await drive.createFolder('Photobooth HIMATIFA 6')).toBe('NEWFOLDER');
+    expect(await drive.createFolder('Photobooth Informatika 6')).toBe('NEWFOLDER');
     const post = calls.find((c) => c.method === 'POST' && c.url.startsWith(ep.api))!;
     expect(JSON.parse(String(post.body))).toEqual({
-      name: 'Photobooth HIMATIFA 6',
+      name: 'Photobooth Informatika 6',
       mimeType: 'application/vnd.google-apps.folder',
     });
   });

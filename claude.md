@@ -1,6 +1,6 @@
 # Aturan Git untuk Claude
 
-Proyek: Photobooth "Dies Natalis HIMATIFA Level 6".
+Proyek: Photobooth "Dies Natalis Informatika ke-6".
 
 ## Commit
 - Boleh membuat commit lokal, tapi hanya setelah satu unit kerja selesai dan tesnya lolos. Jangan commit kode yang masih rusak.
