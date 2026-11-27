@@ -44,6 +44,8 @@ function MonitorCard({ ctx }: { ctx: AdminCtx }) {
   const selection = state.retakeSelection;
   const hasSelection = selection.length > 0;
   const noCamera = camera.stream === null;
+  // layar tamu memegang webcam: panel tidak membuka kamera, cukup tampilkan statusnya
+  const boothHoldsCamera = state.booth;
 
   return (
     <Card
@@ -58,7 +60,20 @@ function MonitorCard({ ctx }: { ctx: AdminCtx }) {
       }
     >
       <div className="monitor">
-        {idle ? (
+        {idle && boothHoldsCamera ? (
+          <div className="monitor__empty">
+            <p className="monitor__empty-title">
+              {state.boothCamera?.ok ? 'Kamera Aktif di Layar Tamu' : state.boothCamera ? 'Kamera Layar Tamu Bermasalah' : 'Memulai Kamera...'}
+            </p>
+            <p className="monitor__empty-text">
+              {state.boothCamera?.ok
+                ? 'Kamera dipakai layar tamu, jadi tidak ditampilkan ulang di sini agar tidak berebut. Lihat monitor tamu untuk cek posisi.'
+                : state.boothCamera
+                  ? `Layar tamu gagal membuka kamera${state.boothCamera.error ? `: ${state.boothCamera.error}` : ''}. Pastikan tidak ada aplikasi lain yang memakai webcam.`
+                  : 'Menunggu layar tamu membuka kamera.'}
+            </p>
+          </div>
+        ) : idle ? (
           <>
             <LiveVideo stream={camera.stream} mirror={state.settings.mirrorPreview} />
             {noCamera && (

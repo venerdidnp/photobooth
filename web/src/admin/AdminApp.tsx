@@ -30,8 +30,11 @@ export function AdminApp() {
 
   const phase = state?.phase;
   const sessionRunning = phase !== undefined && phase !== 'idle';
-  // webcam hanya dibuka di panel saat idle & di tab Control, supaya tidak berebut dengan /booth
-  const preview = useCamera(cameraId, tab === 'control' && !sessionRunning);
+  // Webcam hanya bisa dipegang satu pemilik. Bila layar tamu (/booth) terhubung, dialah pemiliknya:
+  // panel tidak boleh ikut membuka kamera (kalau tidak, salah satunya mati). Panel hanya membuka kamera
+  // sendiri saat tidak ada layar tamu (uji coba), idle, dan di tab Control.
+  const boothConnected = state?.booth ?? true;
+  const preview = useCamera(cameraId, tab === 'control' && !sessionRunning && !boothConnected);
 
   // --- daftar kamera + ingat pilihan terakhir
   const refreshDevices = useCallback(() => {

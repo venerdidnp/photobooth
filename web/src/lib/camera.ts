@@ -23,16 +23,24 @@ export function saveCameraId(id: string | null): void {
   }
 }
 
-/** Minta izin kamera dulu supaya label perangkat terbaca, lalu daftar semua webcam. */
+/**
+ * Daftar semua webcam. Probe getUserMedia (untuk membuka label) HANYA dilakukan bila label belum terbaca,
+ * karena probe membuka webcam sesaat dan bisa mematikan stream yang sedang dipegang halaman lain (/booth).
+ */
 export async function listCameras(): Promise<MediaDeviceInfo[]> {
-  try {
-    const probe = await navigator.mediaDevices.getUserMedia({ video: true });
-    probe.getTracks().forEach((t) => t.stop());
-  } catch {
-    /* tetap coba enumerateDevices; label bisa kosong */
+  let all = await navigator.mediaDevices.enumerateDevices();
+  let cams = all.filter((d) => d.kind === 'videoinput');
+  if (cams.length > 0 && cams.some((d) => d.label === '')) {
+    try {
+      const probe = await navigator.mediaDevices.getUserMedia({ video: true });
+      probe.getTracks().forEach((t) => t.stop());
+      all = await navigator.mediaDevices.enumerateDevices();
+      cams = all.filter((d) => d.kind === 'videoinput');
+    } catch {
+      /* label tetap kosong; daftar tetap dipakai */
+    }
   }
-  const all = await navigator.mediaDevices.enumerateDevices();
-  return all.filter((d) => d.kind === 'videoinput');
+  return cams;
 }
 
 /** Stream simulasi 1280x720: gradien bergerak + lingkaran melayang + jam. Berhenti sendiri saat track dihentikan. */
