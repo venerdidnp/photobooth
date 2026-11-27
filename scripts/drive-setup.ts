@@ -1,13 +1,13 @@
 /**
- * Setup Google Drive satu kali: login Google lewat browser, simpan refresh token di data/google-token.json,
- * lalu periksa (atau buat) folder tujuan.
- *
- *   npm run drive:setup                                   login + periksa DRIVE_FOLDER_ID dari .env
- *   npm run drive:setup -- --create-folder "Nama Folder"  buat folder baru milik aplikasi (disarankan)
- *   npm run drive:setup -- --reauth                       paksa login ulang
- *
- * Scope hanya drive.file: aplikasi hanya bisa menyentuh file/folder yang ia buat sendiri.
- */
+* Setup Google Drive satu kali: login Google lewat browser, simpan refresh token di data/google-token.json,
+* lalu periksa (atau buat) folder tujuan.
+*
+*   npm run drive:setup                                   login + periksa DRIVE_FOLDER_ID dari .env
+*   npm run drive:setup -- --create-folder "Nama Folder"  buat folder baru milik aplikasi (disarankan)
+*   npm run drive:setup -- --reauth                       paksa login ulang
+*
+* Scope hanya drive.file: aplikasi hanya bisa menyentuh file/folder yang ia buat sendiri.
+*/
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -35,7 +35,7 @@ const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 if (!clientId || !clientSecret) {
   console.error(
     'GOOGLE_CLIENT_ID dan GOOGLE_CLIENT_SECRET belum diisi di .env.\n' +
-      'Ikuti langkah "Membuat kredensial Google" di README, lalu jalankan lagi.',
+    'Ikuti langkah "Membuat kredensial Google" di README, lalu jalankan lagi.',
   );
   process.exit(1);
 }
@@ -106,7 +106,7 @@ async function login(): Promise<string> {
   if (!res.ok || !json.refresh_token) {
     throw new Error(
       `Gagal menukar kode login: ${json.error_description ?? json.error ?? res.status}` +
-        (res.ok ? ' (tidak ada refresh token; coba lagi dengan --reauth)' : ''),
+      (res.ok ? ' (tidak ada refresh token; coba lagi dengan --reauth)' : ''),
     );
   }
   return json.refresh_token;

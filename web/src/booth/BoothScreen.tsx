@@ -115,7 +115,18 @@ function CameraStage({
 
   return (
     <div className="booth-stage">
-      {showShot ? <img className="booth-shot" src={shotUrl} alt="" draggable={false} /> : liveView}
+      {showShot ? (
+        // preview ikut dicerminkan seperti live view supaya tidak "loncat"; file foto aslinya tetap tidak dibalik
+        <img
+          className="booth-shot"
+          src={shotUrl}
+          alt=""
+          draggable={false}
+          style={state.settings.mirrorPreview ? { transform: 'scaleX(-1)' } : undefined}
+        />
+      ) : (
+        liveView
+      )}
 
       {phase === 'idle' && (
         <div className="booth-overlay booth-overlay--idle">
