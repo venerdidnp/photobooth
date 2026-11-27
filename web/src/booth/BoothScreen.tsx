@@ -116,14 +116,8 @@ function CameraStage({
   return (
     <div className="booth-stage">
       {showShot ? (
-        // preview ikut dicerminkan seperti live view supaya tidak "loncat"; file foto aslinya tetap tidak dibalik
-        <img
-          className="booth-shot"
-          src={shotUrl}
-          alt=""
-          draggable={false}
-          style={state.settings.mirrorPreview ? { transform: 'scaleX(-1)' } : undefined}
-        />
+        // file foto sudah ikut dicerminkan saat dijepret (bila mirror aktif), jadi ditampilkan apa adanya
+        <img className="booth-shot" src={shotUrl} alt="" draggable={false} />
       ) : (
         liveView
       )}

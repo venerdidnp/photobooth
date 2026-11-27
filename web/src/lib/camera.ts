@@ -98,6 +98,8 @@ async function openStream(deviceId: string | null): Promise<MediaStream> {
 }
 
 const RETRY_MS = 2000;
+/** Berapa lama track boleh 'mute' sebelum kamera dibuka ulang. */
+const MUTE_GRACE_MS = 4000;
 
 /**
  * Buka webcam yang dipilih; lepas otomatis saat berganti/tidak dipakai.
@@ -117,8 +119,19 @@ export function useCamera(deviceId: string | null, enabled = true) {
     let cancelled = false;
     let current: MediaStream | null = null;
     let retryTimer: number | undefined;
+    let muteTimer: number | undefined;
     const retryLater = () => {
       retryTimer = window.setTimeout(() => !cancelled && setAttempt((n) => n + 1), RETRY_MS);
+    };
+    /** Webcam mati/macet: lepas stream, laporkan, lalu coba buka lagi. */
+    const died = (reason: string) => {
+      if (cancelled) return;
+      window.clearTimeout(muteTimer);
+      current?.getTracks().forEach((t) => t.stop());
+      current = null;
+      setStream(null);
+      setError(reason);
+      retryLater();
     };
 
     openStream(deviceId)
@@ -130,14 +143,16 @@ export function useCamera(deviceId: string | null, enabled = true) {
         current = s;
         setError(null);
         setStream(s);
-        s.getVideoTracks().forEach((t) =>
-          t.addEventListener('ended', () => {
-            if (cancelled) return;
-            setStream(null);
-            setError('camera disconnected');
-            retryLater();
-          }),
-        );
+        s.getVideoTracks().forEach((t) => {
+          t.addEventListener('ended', () => died('camera disconnected'));
+          // 'mute' = webcam berhenti mengirim gambar tanpa putus (mis. diambil aplikasi lain, USB tidur):
+          // bila tidak pulih dalam beberapa detik, buka ulang kamera.
+          t.addEventListener('mute', () => {
+            window.clearTimeout(muteTimer);
+            muteTimer = window.setTimeout(() => died('camera stopped sending video'), MUTE_GRACE_MS);
+          });
+          t.addEventListener('unmute', () => window.clearTimeout(muteTimer));
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -149,6 +164,7 @@ export function useCamera(deviceId: string | null, enabled = true) {
     return () => {
       cancelled = true;
       window.clearTimeout(retryTimer);
+      window.clearTimeout(muteTimer);
       current?.getTracks().forEach((t) => t.stop());
     };
   }, [deviceId, enabled, attempt]);
@@ -156,8 +172,12 @@ export function useCamera(deviceId: string | null, enabled = true) {
   return { stream, error };
 }
 
-/** Ambil satu frame penuh dari <video> sebagai JPEG (tidak dibalik, walau preview dicerminkan). */
-export function captureFrame(video: HTMLVideoElement, quality = 0.92): Promise<Blob> {
+/**
+ * Ambil satu frame penuh dari <video> sebagai JPEG.
+ * `mirror` = true membalik kiri-kanan, dipakai bila tampilan di layar tamu dicerminkan, supaya foto
+ * selalu sama persis dengan yang dilihat tamu di monitor.
+ */
+export function captureFrame(video: HTMLVideoElement, quality = 0.92, mirror = false): Promise<Blob> {
   const w = video.videoWidth;
   const h = video.videoHeight;
   // video yang belum siap/mati melaporkan 0x0 atau 2x2: jangan pernah simpan foto sebesar itu
@@ -165,7 +185,12 @@ export function captureFrame(video: HTMLVideoElement, quality = 0.92): Promise<B
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
-  canvas.getContext('2d')!.drawImage(video, 0, 0, w, h);
+  const ctx = canvas.getContext('2d')!;
+  if (mirror) {
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, 0, 0, w, h);
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('gagal membuat JPEG'))), 'image/jpeg', quality),
   );

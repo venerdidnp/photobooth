@@ -3,6 +3,7 @@ import type { FrameInfo, Settings } from '../../../shared/protocol';
 import { DEMO_CAMERA_ID, listCameras, loadCameraId, saveCameraId, useCamera } from '../lib/camera';
 import { api, useServer } from '../lib/server';
 import { unlockAudioOnInteraction } from '../lib/sfx';
+import { useWakeLock } from '../lib/wakelock';
 import { ControlPage } from './ControlPage';
 import { Header, Toast, type AdminCtx, type Tab } from './parts';
 import { QueuePage } from './QueuePage';
@@ -27,6 +28,7 @@ export function AdminApp() {
   const [cameraId, setCameraId] = useState<string | null>(() => loadCameraId());
   const [toast, setToast] = useState<string | null>(null);
   const escAt = useRef(0);
+  useWakeLock();
 
   const phase = state?.phase;
   const sessionRunning = phase !== undefined && phase !== 'idle';

@@ -266,7 +266,7 @@ Keputusan yang diambil (bisa diubah):
 - **Layar "Offline"** = tidak ada internet saat sesi selesai: "Foto Tersimpan di Laptop". Bukan layar kamera/WebSocket putus.
 - **Retake multi-pose**: tombol **Ulangi** di kartu pose bersifat toggle. Saat ada pose terpilih muncul tombol **Ulangi Pose n**, dan **Simpan & Upload** dinonaktifkan sampai pilihan dikosongkan.
 - **Layar hasil** menampilkan strip yang sudah dirakit dengan frame, bukan foto mentah.
-- **Pengaturan sesi** (hitung mundur, jeda, mirror, suara, flash) ada di kartu *Kamera & Sesi* di halaman Kontrol. Jumlah pose ditentukan jumlah slot frame. Mirror membalik tampilan kamera di layar tamu seperti cermin; foto hasil tidak dibalik.
+- **Pengaturan sesi** (hitung mundur, jeda, mirror, suara, flash) ada di kartu *Kamera & Sesi* di halaman Kontrol. Jumlah pose ditentukan jumlah slot frame. Mirror (bawaan: mati) membalik tampilan kamera di layar tamu seperti cermin, dan foto hasil **ikut dibalik** supaya selalu sama dengan yang dilihat tamu di monitor. Tulisan di baju tamu akan terbalik di foto bila mirror dinyalakan.
 - **Preview kamera di panel operator** dimatikan selama sesi supaya tidak berebut kamera dengan `/booth`.
 - **Progres layar Menyimpan** menampilkan langkah penyimpanan yang sebenarnya (bukan persentase palsu).
 - **Riwayat Sesi** memakai `strip.png` asli sebagai thumbnail (belum ada thumbnail kecil di server); cukup untuk puluhan sesi terakhir (40 ditampilkan). Klik untuk membuka strip penuh dan mengunduhnya.

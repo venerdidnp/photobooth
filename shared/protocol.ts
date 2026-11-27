@@ -22,7 +22,7 @@ export interface Settings {
   frameId: string | null;
   countdownSec: number;
   pauseSec: number;
-  /** Balik horizontal live preview di /booth (seperti cermin). Foto hasil tidak dibalik. */
+  /** Balik horizontal tampilan di /booth (seperti cermin). Foto hasil ikut dibalik supaya sama dengan yang dilihat tamu. */
   mirrorPreview: boolean;
   sound: boolean;
   /** Efek flash putih saat jepret. */

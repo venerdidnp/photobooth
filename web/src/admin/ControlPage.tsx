@@ -311,7 +311,7 @@ function CameraCard({ ctx }: { ctx: AdminCtx }) {
         </div>
         <div className="card__stack" style={{ gap: 10, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
           <SwitchRow label="Mirror / Flip Kamera">
-            <Toggle label="Mirror kamera" on={s.mirrorPreview} onChange={(v) => saveSettings({ mirrorPreview: v })} />
+            <Toggle label="Mirror kamera" on={s.mirrorPreview} disabled={!idle} onChange={(v) => saveSettings({ mirrorPreview: v })} />
           </SwitchRow>
           <SwitchRow label="Suara Hitung Mundur & Shutter">
             <Toggle label="Suara" on={s.sound} onChange={(v) => saveSettings({ sound: v })} />

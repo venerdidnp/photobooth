@@ -6,6 +6,7 @@ import { captureFrame, useCamera } from '../lib/camera';
 import { composeStrip } from '../lib/compose';
 import { api, sessionFileUrl, useServer } from '../lib/server';
 import { sfx, unlockAudioOnInteraction } from '../lib/sfx';
+import { useWakeLock } from '../lib/wakelock';
 import { BoothScreen } from './BoothScreen';
 
 async function upload(url: string, blob: Blob, type: string): Promise<boolean> {
@@ -38,7 +39,8 @@ export function BoothApp() {
         try {
           const video = videoRef.current;
           if (!video) throw new Error('video tidak tersedia');
-          const blob = await captureFrame(video);
+          // foto ikut dicerminkan bila tampilan tamu dicerminkan: hasilnya sama dengan yang dilihat tamu
+          const blob = await captureFrame(video, 0.92, stateRef.current?.settings.mirrorPreview ?? false);
           const url = URL.createObjectURL(blob);
           setLocalShot((prev) => {
             if (prev) URL.revokeObjectURL(prev.url);
@@ -72,7 +74,9 @@ export function BoothApp() {
   sendRef.current = send;
   stateRef.current = state;
 
-  const { stream, error } = useCamera(state?.cameraId ?? null);
+  // tunggu state dari server dulu supaya kamera yang dipilih operator langsung dibuka (tanpa buka-tutup dua kali)
+  const { stream, error } = useCamera(state?.cameraId ?? null, state !== null);
+  useWakeLock();
 
   // laporkan status kamera ke server (operator melihatnya di panel)
   useEffect(() => {
