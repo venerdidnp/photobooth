@@ -11,24 +11,24 @@ export interface ConnectivityMonitor {
 
 export function startConnectivityMonitor(
   onChange: (online: boolean) => void,
-  opts: { url?: string; intervalMs?: number; timeoutMs?: number } = {},
+  opts: { url?: string; intervalMs?: number; timeoutMs?: number; fetch?: typeof fetch } = {},
 ): ConnectivityMonitor {
   const url = opts.url ?? process.env.CONNECTIVITY_URL ?? 'https://www.gstatic.com/generate_204';
   const intervalMs = opts.intervalMs ?? 10_000;
   const timeoutMs = opts.timeoutMs ?? 4_000;
+  const fetchImpl = opts.fetch ?? fetch;
   let online = true;
   let stopped = false;
 
   const set = (next: boolean) => {
-    if (next !== online) {
-      online = next;
-      onChange(online);
-    }
+    if (stopped || next === online) return;
+    online = next;
+    onChange(online);
   };
 
   const check = async () => {
     try {
-      const res = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(timeoutMs), cache: 'no-store' });
+      const res = await fetchImpl(url, { method: 'GET', signal: AbortSignal.timeout(timeoutMs), cache: 'no-store' });
       set(res.status >= 200 && res.status < 400);
     } catch {
       set(false);
@@ -41,9 +41,7 @@ export function startConnectivityMonitor(
 
   return {
     isOnline: () => online,
-    report: (v) => {
-      if (!stopped) set(v);
-    },
+    report: (v) => set(v),
     stop: () => {
       stopped = true;
       clearInterval(timer);
