@@ -26,6 +26,38 @@ interface QueueFile {
   items: QueueRecord[];
 }
 
+const STATUSES: ReadonlySet<QueueItem['status']> = new Set(['queued', 'uploading', 'done', 'failed']);
+
+const isStatus = (v: unknown): v is QueueItem['status'] =>
+  typeof v === 'string' && STATUSES.has(v as QueueItem['status']);
+
+function normalizeRecord(raw: unknown, now: number): QueueRecord | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.id !== 'string' || r.id === '') return null;
+  if (typeof r.sessionNo !== 'number' || !Number.isInteger(r.sessionNo) || r.sessionNo < 1) return null;
+  if (typeof r.name !== 'string' || r.name === '') return null;
+
+  const num = (v: unknown, fallback: number): number =>
+    typeof v === 'number' && Number.isFinite(v) ? v : fallback;
+  const int = (v: unknown, fallback: number): number => Math.max(0, Math.round(num(v, fallback)));
+
+  return {
+    id: r.id,
+    sessionNo: r.sessionNo,
+    name: r.name,
+    sizeBytes: int(r.sizeBytes, 0),
+    status: isStatus(r.status) ? r.status : 'queued',
+    attempts: int(r.attempts, 0),
+    progress: Math.min(1, Math.max(0, num(r.progress, 0))),
+    createdAt: num(r.createdAt, now),
+    nextAttemptAt: num(r.nextAttemptAt, now),
+    error: typeof r.error === 'string' ? r.error : undefined,
+    driveFileId: typeof r.driveFileId === 'string' ? r.driveFileId : undefined,
+    finishedAt: typeof r.finishedAt === 'number' && Number.isFinite(r.finishedAt) ? r.finishedAt : undefined,
+  };
+}
+
 /**
  * Antrean upload yang disimpan ke disk (data/upload-queue.json), jadi tidak hilang kalau server mati.
  * Satu item per sesi. Item 'uploading' yang tertinggal saat server mati dikembalikan ke 'queued'.
@@ -45,7 +77,11 @@ export class UploadQueue {
   private load(): void {
     try {
       const raw = JSON.parse(fs.readFileSync(this.file, 'utf8')) as Partial<QueueFile>;
-      if (Array.isArray(raw.items)) this.items = raw.items.filter((i) => i && typeof i.id === 'string');
+      if (Array.isArray(raw.items)) {
+        this.items = raw.items
+          .map((i) => normalizeRecord(i, this.now()))
+          .filter((i): i is QueueRecord => i !== null);
+      }
     } catch {
       this.items = [];
     }

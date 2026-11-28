@@ -125,6 +125,37 @@ describe('antrean tersimpan di disk', () => {
     expect(new UploadQueue(file).summary()).toEqual({ queued: 0, uploading: 0, done: 0, failed: 0 });
   });
 
+  it('record rusak dibersihkan dan status tak dikenal menjadi "queued"', () => {
+    fs.writeFileSync(
+      file,
+      JSON.stringify({
+        version: 1,
+        items: [
+          {
+            id: 'a',
+            sessionNo: 1,
+            name: 'PHOTO #001.png',
+            sizeBytes: -5,
+            status: 'aneh',
+            attempts: -3,
+            progress: 9,
+            createdAt: 5,
+            nextAttemptAt: 6,
+          },
+          { id: 'b', sessionNo: 2, name: 'PHOTO #002.png', status: 'queued' },
+          { id: 'c', name: 'tanpa nomor', status: 'queued' },
+          null,
+        ],
+      }),
+    );
+    const q = new UploadQueue(file);
+    expect(q.summary()).toEqual({ queued: 2, uploading: 0, done: 0, failed: 0 });
+    expect(q.list().map((i) => [i.sessionNo, i.status, i.attempts, i.progress, i.sizeBytes])).toEqual([
+      [2, 'queued', 0, 0, 0],
+      [1, 'queued', 0, 1, 0],
+    ]);
+  });
+
   it('tidak meninggalkan file .tmp', () => {
     new UploadQueue(file).enqueue(1, 'a', 1);
     expect(fs.readdirSync(dir).filter((f) => f.endsWith('.tmp'))).toEqual([]);
