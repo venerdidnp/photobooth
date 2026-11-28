@@ -35,7 +35,13 @@ export function validateFrameJson(raw: unknown): string | null {
     }
     if (s.x + s.width > f.width || s.y + s.height > f.height) return `slot ${n} keluar dari canvas`;
   }
-  if (f.image !== undefined && (typeof f.image !== 'string' || f.image !== path.basename(f.image))) {
+  if (f.name !== undefined && (typeof f.name !== 'string' || f.name.trim() === '')) {
+    return 'name harus berupa teks yang tidak kosong';
+  }
+  if (
+    f.image !== undefined &&
+    (typeof f.image !== 'string' || f.image.trim() === '' || f.image !== path.basename(f.image))
+  ) {
     return 'image harus berupa nama file saja (tanpa folder)';
   }
   return null;

@@ -37,6 +37,9 @@ describe('frame', () => {
     ['slot keluar canvas', { ...goodFrame, slots: [{ x: 700, y: 0, width: 200, height: 100 }] }],
     ['slot pecahan', { ...goodFrame, slots: [{ x: 1.5, y: 0, width: 10, height: 10 }] }],
     ['image berisi folder', { ...goodFrame, image: '../x.png' }],
+    ['image kosong', { ...goodFrame, image: '' }],
+    ['nama bukan teks', { ...goodFrame, name: 42 }],
+    ['nama kosong', { ...goodFrame, name: '   ' }],
   ])('menolak: %s', (_label, raw) => {
     expect(validateFrameJson(raw)).not.toBeNull();
   });
