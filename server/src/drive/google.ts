@@ -44,6 +44,7 @@ interface GoogleErrorBody {
 /** Klien Google Drive minimal (OAuth refresh token + scope drive.file), tanpa pustaka tambahan. */
 export class GoogleDrive implements Uploader {
   private accessToken: { value: string; expiresAt: number } | null = null;
+  private refreshPromise: Promise<string> | null = null;
   private readonly fetchImpl: typeof fetch;
   private readonly ep: GoogleEndpoints;
   private readonly now: () => number;
@@ -88,7 +89,14 @@ export class GoogleDrive implements Uploader {
   async getAccessToken(force = false): Promise<string> {
     const t = this.now();
     if (!force && this.accessToken && this.accessToken.expiresAt - 60_000 > t) return this.accessToken.value;
+    this.refreshPromise ??= this.fetchAccessToken().finally(() => {
+      this.refreshPromise = null;
+    });
+    return this.refreshPromise;
+  }
 
+  private async fetchAccessToken(): Promise<string> {
+    const t = this.now();
     const res = await this.send(
       this.ep.token,
       {

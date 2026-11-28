@@ -110,6 +110,23 @@ describe('token', () => {
     expect(calls.filter((c) => c.url.startsWith(ep.token))).toHaveLength(2);
   });
 
+  it('permintaan paralel memakai satu refresh token', async () => {
+    let tokenCalls = 0;
+    const { drive } = make((call) => {
+      if (call.url.startsWith(ep.token)) {
+        tokenCalls++;
+        return json({ access_token: 'AT', expires_in: 3600 });
+      }
+      if (call.url.includes('/files?q')) return json({ files: [] });
+      return json({ id: 'f' });
+    });
+    await Promise.all([
+      drive.upload({ name: 'a', data: Buffer.from('x'), sessionKey: 'k1' }),
+      drive.upload({ name: 'b', data: Buffer.from('x'), sessionKey: 'k2' }),
+    ]);
+    expect(tokenCalls).toBe(1);
+  });
+
   it('401 dari Drive: token diperbarui sekali lalu permintaan diulang', async () => {
     let first = true;
     const { drive, calls } = make((call) => {
