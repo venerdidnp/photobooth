@@ -12,6 +12,11 @@ describe('checkBasicAuth', () => {
     expect(checkBasicAuth(header('operator', 'a:b:c'), 'operator', 'a:b:c')).toBe(true);
   });
 
+  it('menerima skema Basic tanpa peduli huruf besar-kecil', () => {
+    expect(checkBasicAuth(header('operator', 's3cret').replace('Basic', 'basic'), 'operator', 's3cret')).toBe(true);
+    expect(checkBasicAuth(header('operator', 's3cret').replace('Basic', 'BASIC'), 'operator', 's3cret')).toBe(true);
+  });
+
   it('menolak user atau password yang salah', () => {
     expect(checkBasicAuth(header('operator', 'salah'), 'operator', 's3cret')).toBe(false);
     expect(checkBasicAuth(header('lain', 's3cret'), 'operator', 's3cret')).toBe(false);

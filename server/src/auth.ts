@@ -9,8 +9,10 @@ function safeEqual(a: string, b: string): boolean {
 
 /** Periksa header `Authorization: Basic ...` terhadap user + password dari env. */
 export function checkBasicAuth(header: string | undefined, user: string, pass: string): boolean {
-  if (!header || !header.startsWith('Basic ')) return false;
-  const decoded = Buffer.from(header.slice('Basic '.length).trim(), 'base64').toString('utf8');
+  if (!header) return false;
+  const match = /^basic\s+/i.exec(header);
+  if (!match) return false;
+  const decoded = Buffer.from(header.slice(match[0].length).trim(), 'base64').toString('utf8');
   const i = decoded.indexOf(':');
   if (i < 0) return false;
   const userOk = safeEqual(decoded.slice(0, i), user);
