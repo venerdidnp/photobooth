@@ -31,6 +31,36 @@ export function writeFileAtomic(file: string, data: string | Buffer): void {
   fs.renameSync(tmp, file);
 }
 
+const META_STATUSES: ReadonlySet<SessionMeta['status']> = new Set([
+  'in_progress',
+  'finalized',
+  'cancelled',
+  'abandoned',
+]);
+
+const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+function isSessionMeta(raw: unknown): raw is SessionMeta {
+  if (!raw || typeof raw !== 'object') return false;
+  const m = raw as Record<string, unknown>;
+  return (
+    isFiniteNumber(m.no) &&
+    Number.isInteger(m.no) &&
+    m.no > 0 &&
+    typeof m.createdAt === 'string' &&
+    typeof m.frameId === 'string' &&
+    isFiniteNumber(m.slotCount) &&
+    Number.isInteger(m.slotCount) &&
+    m.slotCount > 0 &&
+    typeof m.status === 'string' &&
+    META_STATUSES.has(m.status as SessionMeta['status']) &&
+    Array.isArray(m.slotRevs) &&
+    m.slotRevs.every(isFiniteNumber) &&
+    isFiniteNumber(m.stripRev) &&
+    isFiniteNumber(m.retakes)
+  );
+}
+
 export function toSummary(meta: SessionMeta): SessionSummary {
   return {
     no: meta.no,
@@ -117,7 +147,8 @@ export class SessionStore {
 
   readMeta(no: number): SessionMeta | null {
     try {
-      return JSON.parse(fs.readFileSync(this.metaPath(no), 'utf8')) as SessionMeta;
+      const raw = JSON.parse(fs.readFileSync(this.metaPath(no), 'utf8')) as unknown;
+      return isSessionMeta(raw) && raw.no === no ? raw : null;
     } catch {
       return null;
     }

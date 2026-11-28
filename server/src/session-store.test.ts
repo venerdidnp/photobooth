@@ -122,6 +122,21 @@ describe('penyimpanan sesi', () => {
     expect(s.updateMeta(99, (m) => m)).toBeNull();
   });
 
+  it('meta rusak atau nomornya tidak cocok diabaikan', () => {
+    const s = new SessionStore(dir);
+    const rusak = s.reserveNext();
+    fs.writeFileSync(path.join(s.dir(rusak), 'meta.json'), JSON.stringify({ no: rusak, status: 'in_progress' }));
+    const salahNomor = s.reserveNext();
+    fs.writeFileSync(path.join(s.dir(salahNomor), 'meta.json'), JSON.stringify(meta(99)));
+    const valid = s.reserveNext();
+    s.writeMeta(meta(valid));
+
+    expect(s.readMeta(rusak)).toBeNull();
+    expect(s.readMeta(salahNomor)).toBeNull();
+    expect(s.list().map((m) => m.no)).toEqual([valid]);
+    expect(s.updateMeta(rusak, (m) => m)).toBeNull();
+  });
+
   it('markAbandoned menandai sesi yang masih berjalan saat server mati', () => {
     const s = new SessionStore(dir);
     s.writeMeta(meta(s.reserveNext(), { status: 'in_progress' }));
