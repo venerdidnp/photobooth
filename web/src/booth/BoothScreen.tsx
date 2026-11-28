@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { formatSessionNo, type FrameInfo, type PublicState } from '../../../shared/protocol';
+import { formatSessionNo, SAVING_STEPS, type FrameInfo, type PublicState } from '../../../shared/protocol';
 import { Progress } from '../components/Progress';
 import { SlotBadge } from '../components/SlotBadge';
 import { sessionFileUrl } from '../lib/server';
@@ -306,7 +306,7 @@ function ResultInfo({ state, label }: { state: PublicState; label: string }) {
     }
 
     case 'saving': {
-      const progress = state.savingStep / 3;
+      const progress = state.savingStep / SAVING_STEPS;
       return (
         <div className="result-info">
           <p className="result-tag">Menyimpan</p>
