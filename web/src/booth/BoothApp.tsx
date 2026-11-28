@@ -26,7 +26,7 @@ export function BoothApp() {
   const stateRef = useRef<PublicState | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sendRef = useRef<ReturnType<typeof useServer>['send'] | null>(null);
-  const [localShot, setLocalShot] = useState<{ slot: number; url: string } | null>(null);
+  const [localShot, setLocalShot] = useState<{ sessionNo: number; slot: number; url: string } | null>(null);
   const [frames, setFrames] = useState<FrameInfo[]>([]);
 
   const handleMessage = useCallback((msg: ServerMsg) => {
@@ -42,10 +42,7 @@ export function BoothApp() {
           // foto ikut dicerminkan bila tampilan tamu dicerminkan: hasilnya sama dengan yang dilihat tamu
           const blob = await captureFrame(video, 0.92, stateRef.current?.settings.mirrorPreview ?? false);
           const url = URL.createObjectURL(blob);
-          setLocalShot((prev) => {
-            if (prev) URL.revokeObjectURL(prev.url);
-            return { slot: msg.slot, url };
-          });
+          setLocalShot({ sessionNo: msg.sessionNo, slot: msg.slot, url });
           const ok = await upload(`/api/sessions/${msg.sessionNo}/shots/${msg.slot}`, blob, 'image/jpeg');
           if (!ok) send({ type: 'shot.failed', slot: msg.slot, reason: 'upload gagal' });
         } catch (err) {
@@ -77,6 +74,15 @@ export function BoothApp() {
   // tunggu state dari server dulu supaya kamera yang dipilih operator langsung dibuka (tanpa buka-tutup dua kali)
   const { stream, error } = useCamera(state?.cameraId ?? null, state !== null);
   useWakeLock();
+
+  useEffect(() => {
+    if (!localShot) return;
+    return () => URL.revokeObjectURL(localShot.url);
+  }, [localShot]);
+
+  useEffect(() => {
+    setLocalShot(null);
+  }, [state?.sessionNo]);
 
   // laporkan status kamera ke server (operator melihatnya di panel)
   useEffect(() => {
@@ -144,7 +150,9 @@ export function BoothApp() {
         state={state}
         liveView={liveView}
         frames={frames}
-        localShotUrl={localShot && localShot.slot === state.current ? localShot.url : null}
+        localShotUrl={
+          localShot && localShot.sessionNo === state.sessionNo && localShot.slot === state.current ? localShot.url : null
+        }
       />
     </Stage>
   );
