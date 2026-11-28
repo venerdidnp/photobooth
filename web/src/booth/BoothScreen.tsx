@@ -183,10 +183,14 @@ function CameraStage({
       {(phase === 'between' || phase === 'assembling') && (
         <>
           <div className="booth-overlay" style={{ background: 'rgba(0,0,0,0.15)', justifyContent: 'flex-start', paddingTop: 40 }}>
-            <div className="stage-label">Pose {cur} tersimpan</div>
+            <div className="stage-label">{state.pendingShot ? `Menyimpan pose ${cur}...` : `Pose ${cur} tersimpan`}</div>
           </div>
           <div className="booth-banner">
-            {phase === 'assembling' || !hasNext ? 'Semua pose selesai · menyusun strip...' : `Ganti gaya! Pose berikutnya dalam ${state.count}`}
+            {phase === 'assembling' || !hasNext
+              ? 'Semua pose selesai · menyusun strip...'
+              : state.count > 0
+                ? `Ganti gaya! Pose berikutnya dalam ${state.count}`
+                : 'Menyimpan pose...'}
           </div>
         </>
       )}
